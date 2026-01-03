@@ -11,15 +11,11 @@
 
     :root{
       --text:#f5f7ff;
+      --gold:#ffc857;
       --gold2:#ffd369;
       --radius:18px;
       --infoH:44px;
       --bgSolid:#070a1b;
-
-      --cols:7;
-      --cardW:190px;
-      --gap:12px;
-      --gridW: calc(var(--cols) * var(--cardW) + (var(--cols) - 1) * var(--gap));
     }
 
     body{
@@ -189,7 +185,7 @@
       position:absolute;
       inset:0;
       background:
-        radial-gradient(circle at 50% 0%, rgba(6,12,42,0.08), rgba(7,10,27,0.22) 55%, rgba(6,8,20,0.28) 100%),
+        radial-gradient(circle at 50% 0%, rgba(6,12,42,0.08), rgba(7,10,27,0.26) 55%, rgba(6,8,20,0.34) 100%),
         linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.10));
     }
 
@@ -201,8 +197,8 @@
       display:flex;
       flex-direction:column;
       width:100%;
-      justify-content:center;
-      align-items:center;
+      max-width:1600px;
+      margin:0 auto;
     }
 
     .grid-wrapper{
@@ -211,37 +207,35 @@
       flex-direction:column;
       gap:16px;
       padding-top:2px;
-      width:var(--gridW);
+      width:100%;
       transform:scale(0.90);
       transform-origin:top center;
       justify-content:flex-start;
-      align-items:center;
     }
 
-    .section{width:var(--gridW)}
+    .section{
+      width:100%;
+    }
 
     .grid{
       display:grid;
-      width:var(--gridW);
-      grid-template-columns:repeat(var(--cols), var(--cardW));
-      gap:var(--gap);
-      justify-content:center;
+      grid-template-columns:repeat(7, minmax(0, 1fr));
+      gap:12px;
     }
 
     .subtle-divider{
       height:1px;
-      width:var(--gridW);
+      width:100%;
       background:linear-gradient(to right, transparent 0%, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.12) 75%, transparent 100%);
       opacity:0.75;
     }
 
     .unranked-label{
-      width:var(--gridW);
       font-size:11px;
       opacity:0.80;
       letter-spacing:0.10em;
       text-transform:uppercase;
-      padding-left:4px;
+      margin-left:4px;
     }
 
     .app.unranked-empty #divider,
@@ -282,8 +276,8 @@
       z-index:8;
       display:inline-flex;
       align-items:center;
-      gap:4px;
-      padding:4px 6px;
+      gap:6px;
+      padding:4px 8px;
       border-radius:999px;
       background:rgba(0,0,0,0.52);
       border:1px solid rgba(255,255,255,0.10);
@@ -301,7 +295,7 @@
     }
 
     .rank-input{
-      width:26px;
+      width:32px;
       background:transparent;
       border:none;
       color:#ffdf7b;
@@ -321,6 +315,17 @@
     }
 
     .rank-input::placeholder{color:rgba(255,255,255,0.20)}
+
+    .rank-text{
+      display:none;
+      color:#ffdf7b;
+      font-size:14px;
+      font-weight:900;
+      line-height:1;
+    }
+
+    body.export-mode .rank-input{display:none !important}
+    body.export-mode .rank-text{display:inline-block !important}
 
     .info-bar{
       position:absolute;
@@ -533,47 +538,36 @@
       background:var(--bgSolid) !important;
     }
 
-    body.export-mode .side-menu{display:none !important}
-    body.export-mode .rank-badge{backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
-    body.export-mode .grid-wrapper{transform:none !important}
-    body.export-mode .subtle-divider{
-      height:2px !important;
-      background:rgba(255,255,255,0.12) !important;
+    body.export-mode .side-menu{
+      display:none !important;
     }
-    body.export-mode .app-bg::after{
-      background:rgba(0,0,0,0.18) !important;
+
+    body.export-mode .rank-badge{
+      backdrop-filter:none !important;
+      -webkit-backdrop-filter:none !important;
     }
 
     @media (max-width: 1500px){
-      :root{
-        --cols:6;
-        --cardW:182px;
-      }
+      .grid{grid-template-columns:repeat(6, minmax(0, 1fr))}
     }
 
     @media (max-width: 1280px){
       body{overflow-y:auto;align-items:flex-start}
-      :root{
-        --cols:4;
-        --cardW:170px;
-      }
-      .content{padding:14px 14px 18px}
-      .grid-wrapper{transform:none}
+      .content{padding:14px 14px 18px;max-width:none}
+      .grid-wrapper{transform:scale(1)}
+      .grid{grid-template-columns:repeat(4, minmax(0, 1fr))}
     }
 
     @media (max-width: 720px){
-      :root{
-        --cols:2;
-        --cardW:160px;
-      }
+      .grid{grid-template-columns:repeat(2, minmax(0, 1fr))}
       .logo-img{max-height:68%}
-      .rank-input{width:26px}
+      .rank-input{width:30px}
     }
   </style>
 </head>
 
 <body>
-  <div id="config-screen" class="config-screen" data-ignore-export="true">
+  <div id="config-screen" class="config-screen">
     <div class="config-title" data-i18n="configTitle">Configure your view</div>
 
     <div>
@@ -619,7 +613,7 @@
 
   <div id="app" class="app">
     <div class="app-bg">
-      <img id="bg-img" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3375780/page_bg_raw.jpg?t=1766080552" alt="" />
+      <img id="bg-img" crossorigin="anonymous" src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3375780/page_bg_raw.jpg?t=1766080552" alt="" />
     </div>
 
     <div class="content">
@@ -638,7 +632,7 @@
     </div>
   </div>
 
-  <div id="side-menu" class="side-menu" data-ignore-export="true">
+  <div id="side-menu" class="side-menu">
     <div id="side-handle" class="side-handle">☰</div>
     <div class="side-panel">
       <div class="side-caption" data-i18n="sideOptions">OPTIONS</div>
@@ -818,9 +812,14 @@
         card.dataset.rank=String(r);
         card.classList.add("ranked");
         const input=card.querySelector(".rank-input");
-        if(!input) return;
-        if(!finalizeActive && activeCard===card) return;
-        input.value=String(r);
+        if(input){
+          if(!finalizeActive && activeCard===card){
+          }else{
+            input.value=String(r);
+          }
+        }
+        const label=card.querySelector(".rank-text");
+        if(label) label.textContent=String(r);
       });
 
       const unrankedCards=Array.from(unrankedGrid.querySelectorAll(".card"));
@@ -828,9 +827,14 @@
         card.dataset.rank="";
         card.classList.remove("ranked");
         const input=card.querySelector(".rank-input");
-        if(!input) return;
-        if(!finalizeActive && activeCard===card) return;
-        input.value="";
+        if(input){
+          if(!finalizeActive && activeCard===card){
+          }else{
+            input.value="";
+          }
+        }
+        const label=card.querySelector(".rank-text");
+        if(label) label.textContent="";
       });
 
       updateSectionsVisibility();
@@ -915,6 +919,7 @@
 
       card.innerHTML=`
         <div class="rank-badge">
+          <span class="rank-text"></span>
           <input class="rank-input" type="text" inputmode="numeric" maxlength="2" />
         </div>
 
@@ -924,8 +929,8 @@
 
         <div class="view-normal">
           <div class="cover">
-            <img class="cover-blur" crossorigin="anonymous" referrerpolicy="no-referrer" src="${safeCover}" alt="" />
-            <img class="cover-img" crossorigin="anonymous" referrerpolicy="no-referrer" src="${safeCover}" alt="${safeName} cover" />
+            <img class="cover-blur" crossorigin="anonymous" src="${safeCover}" alt="" />
+            <img class="cover-img" crossorigin="anonymous" src="${safeCover}" alt="${safeName} cover" />
             <div class="no-cover">NO COVER</div>
           </div>
         </div>
@@ -933,13 +938,19 @@
         <div class="view-spoiler">
           <div class="spoiler-surface"></div>
           <div class="spoiler-inner">
-            <img class="logo-img" crossorigin="anonymous" referrerpolicy="no-referrer" src="${safeLogo}" alt="${safeName} logo" />
+            <img class="logo-img" crossorigin="anonymous" src="${safeLogo}" alt="${safeName} logo" />
           </div>
         </div>
       `;
 
       const input=card.querySelector(".rank-input");
-      if(game.rank) input.value=String(game.rank);
+      const label=card.querySelector(".rank-text");
+      if(game.rank){
+        input.value=String(game.rank);
+        if(label) label.textContent=String(game.rank);
+      }else{
+        if(label) label.textContent="";
+      }
 
       const blurImg=card.querySelector(".cover-blur");
       const mainImg=card.querySelector(".cover-img");
@@ -1062,50 +1073,49 @@
     syncConfigDisable();
 
     async function waitForImages(root){
-      const imgs = Array.from(root.querySelectorAll("img"));
-      await Promise.all(imgs.map(img => {
-        if (img.complete) return Promise.resolve();
-        return new Promise(res => {
-          img.addEventListener("load", res, { once:true });
-          img.addEventListener("error", res, { once:true });
+      const imgs=Array.from(root.querySelectorAll("img"));
+      await Promise.all(imgs.map(img=>{
+        if(img.complete) return Promise.resolve();
+        return new Promise(res=>{
+          img.addEventListener("load",res,{once:true});
+          img.addEventListener("error",res,{once:true});
         });
       }));
     }
 
     async function exportPNG(){
-      const root = document.getElementById("app");
-
-      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch {}
+      const root=document.getElementById("app");
+      try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch{}
       await waitForImages(root);
 
       try{
-        const canvas = await html2canvas(root, {
-          backgroundColor: "#0B1020",
-          useCORS: true,
-          allowTaint: false,
-          scale: 2,
-          logging: false,
-          ignoreElements: (el) => el && el.dataset && el.dataset.ignoreExport === "true",
-          onclone: (doc) => {
+        const canvas=await html2canvas(root,{
+          backgroundColor:"#0B1020",
+          useCORS:true,
+          allowTaint:false,
+          scale:2,
+          logging:false,
+          ignoreElements:(el)=>el && el.dataset && el.dataset.ignoreExport==="true",
+          onclone:(doc)=>{
             doc.body.classList.add("export-mode");
-            doc.querySelectorAll('[data-ignore-export="true"]').forEach(n => n.remove());
-            doc.querySelectorAll("img").forEach(img => img.setAttribute("crossorigin","anonymous"));
+            doc.querySelectorAll('[data-ignore-export="true"]').forEach(n=>n.remove());
+            doc.querySelectorAll("img").forEach(img=>img.setAttribute("crossorigin","anonymous"));
           }
         });
 
-        const a = document.createElement("a");
-        a.download = "TopTrails.png";
-        a.href = canvas.toDataURL("image/png");
+        const a=document.createElement("a");
+        a.download="TopTrails.png";
+        a.href=canvas.toDataURL("image/png");
         a.click();
       }catch(err){
-        console.error("Export failed:", err);
+        console.error("Export failed:",err);
         alert("Export échoué. Ouvre la console pour le détail (F12).");
       }
     }
 
-    btnExport.addEventListener("click", async ()=>{
+    btnExport.addEventListener("click",()=>{
       sideMenu.classList.remove("open");
-      await exportPNG();
+      exportPNG();
     });
 
     applyLanguage();
