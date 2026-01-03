@@ -2,493 +2,560 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 
   <style>
-    * { box-sizing: border-box; }
+    *{box-sizing:border-box}
 
-    body {
-      margin: 0;
-      padding: 16px 24px 24px;
-      background: radial-gradient(circle at top, #1a2550 0, #0b1027 56%, #07081a 100%);
-      color: #f5f7ff;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      min-height: 100vh;
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+    :root{
+      --text:#f5f7ff;
+      --gold:#ffc857;
+      --gold2:#ffd369;
+      --radius:18px;
+      --infoH:44px;
+      --bgSolid:#070a1b;
     }
 
-    body.export-mode {
-      background: #0b1126 !important;
-    }
-    body.export-mode * {
-      background-image: none !important;
-    }
-    body.export-mode .config-screen {
-      background: #0b1126 !important;
-    }
-    body.export-mode .subtle-divider {
-      background: rgba(255,255,255,0.14) !important;
-    }
-    body.export-mode .overlay {
-      background: rgba(0,0,0,0.72) !important;
-    }
-    body.export-mode .btn,
-    body.export-mode .btn-small {
-      background: #ffd369 !important;
-    }
-    body.export-mode .no-cover {
-      background: rgba(255,255,255,0.06) !important;
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--text);
+      background:var(--bgSolid);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      overflow:hidden;
+      padding:0;
     }
 
-    .config-screen {
-      width: 100%;
-      max-width: 480px;
-      padding: 24px 24px 20px;
-      border-radius: 18px;
-      background: radial-gradient(circle at top left, #2b3362, #070a1f);
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75);
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+    .config-screen{
+      width:100%;
+      max-width:480px;
+      padding:24px 24px 20px;
+      border-radius:18px;
+      background:radial-gradient(circle at top left, rgba(55,70,130,0.95), rgba(6,9,30,0.92));
+      border:1px solid rgba(255,255,255,0.10);
+      box-shadow:0 16px 40px rgba(0,0,0,0.65);
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+      margin:16px;
     }
 
-    .config-title {
-      font-size: 20px;
-      font-weight: 700;
-      text-align: center;
-      margin-bottom: 4px;
+    .config-title{
+      font-size:20px;
+      font-weight:700;
+      text-align:center;
+      margin-bottom:4px;
     }
 
-    .config-section-title {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      opacity: 0.85;
-      margin-bottom: 4px;
+    .config-section-title{
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:0.12em;
+      opacity:0.85;
+      margin-bottom:4px;
     }
 
-    .config-lang-group {
-      display: flex;
-      gap: 10px;
+    .config-lang-group{
+      display:flex;
+      gap:10px;
     }
 
-    .config-lang-group label {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      cursor: pointer;
+    .config-lang-group label{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:13px;
+      cursor:pointer;
     }
 
-    .config-lang-group input {
-      accent-color: #ffd369;
+    .config-lang-group input{accent-color:var(--gold2)}
+
+    .config-toggle{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      font-size:13px;
     }
 
-    .config-toggle {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      font-size: 13px;
+    .disabled-row{
+      opacity:0.55;
+      pointer-events:none;
     }
 
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 40px;
-      height: 20px;
-      flex-shrink: 0;
+    .switch{
+      position:relative;
+      display:inline-block;
+      width:40px;
+      height:20px;
+      flex-shrink:0;
     }
 
-    .switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
+    .switch input{
+      opacity:0;
+      width:0;
+      height:0;
     }
 
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      inset: 0;
-      background-color: #343950;
-      transition: .2s;
-      border-radius: 999px;
+    .slider{
+      position:absolute;
+      cursor:pointer;
+      inset:0;
+      background-color:#343a58;
+      transition:.2s;
+      border-radius:999px;
     }
 
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 14px;
-      width: 14px;
-      left: 3px;
-      bottom: 3px;
-      background-color: #f5f7ff;
-      transition: .2s;
-      border-radius: 50%;
+    .slider:before{
+      position:absolute;
+      content:"";
+      height:14px;
+      width:14px;
+      left:3px;
+      bottom:3px;
+      background-color:var(--text);
+      transition:.2s;
+      border-radius:50%;
     }
 
-    .switch input:checked + .slider {
-      background-color: #ffd369;
+    .switch input:checked + .slider{background-color:var(--gold2)}
+    .switch input:checked + .slider:before{transform:translateX(18px)}
+    .switch input:disabled + .slider{opacity:0.45;cursor:not-allowed}
+
+    .config-actions{
+      display:flex;
+      justify-content:flex-end;
+      margin-top:4px;
     }
 
-    .switch input:checked + .slider:before {
-      transform: translateX(18px);
+    .btn{
+      border:none;
+      border-radius:999px;
+      padding:6px 16px;
+      font-size:13px;
+      font-weight:800;
+      cursor:pointer;
+      background:linear-gradient(135deg,var(--gold2),#ffb347);
+      color:#141414;
+      box-shadow:0 10px 20px rgba(0,0,0,0.55);
     }
 
-    .config-actions {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 4px;
+    .btn:active{
+      transform:translateY(1px);
+      box-shadow:0 6px 14px rgba(0,0,0,0.55);
     }
 
-    .btn {
-      border: none;
-      border-radius: 999px;
-      padding: 6px 16px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      background: linear-gradient(135deg, #ffd369, #ffb347);
-      color: #141414;
-      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.55);
+    .app{
+      display:none;
+      position:fixed;
+      inset:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background:transparent;
     }
 
-    .btn:active {
-      transform: translateY(1px);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.55);
+    .app.visible{display:block}
+
+    .app-bg{
+      position:absolute;
+      inset:0;
+      z-index:0;
+      overflow:hidden;
     }
 
-    .app {
-      display: none;
-      width: 100%;
-      max-width: 1600px;
-      height: 100vh;
-      padding: 16px 24px 24px;
-      flex-direction: column;
-      gap: 14px;
+    .app-bg img{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      object-position:center;
+      transform:scale(1.02);
+      filter:saturate(1.05) contrast(1.02);
     }
 
-    .app.visible {
-      display: flex;
+    .app-bg::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(6,12,42,0.08), rgba(7,10,27,0.26) 55%, rgba(6,8,20,0.34) 100%),
+        linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.10));
     }
 
-    .grid-wrapper {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+    .content{
+      position:relative;
+      z-index:1;
+      height:100%;
+      padding:16px 24px 24px;
+      display:flex;
+      flex-direction:column;
+      width:100%;
+      max-width:1600px;
+      margin:0 auto;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 12px;
+    .grid-wrapper{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+      padding-top:2px;
+      width:100%;
+      transform:scale(0.90);
+      transform-origin:top center;
+      justify-content:flex-start;
     }
 
-    .subtle-divider {
-      height: 1px;
-      width: 100%;
-      background: linear-gradient(
-        to right,
-        transparent 0%,
-        rgba(255, 255, 255, 0.14) 25%,
-        rgba(255, 255, 255, 0.14) 75%,
-        transparent 100%
-      );
-      opacity: 0.85;
+    .section{
+      width:100%;
     }
 
-    .not-played-label {
-      font-size: 11px;
-      opacity: 0.8;
-      letter-spacing: 0.10em;
-      text-transform: uppercase;
-      margin-left: 4px;
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(7, minmax(0, 1fr));
+      gap:12px;
     }
 
-    .card {
-      position: relative;
-      border-radius: 18px;
-      overflow: hidden;
-      background: rgba(7, 10, 28, 0.92);
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.75);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      transition: transform 0.12s ease-out, box-shadow 0.12s ease-out, border-color 0.12s ease-out;
+    .subtle-divider{
+      height:1px;
+      width:100%;
+      background:linear-gradient(to right, transparent 0%, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.12) 75%, transparent 100%);
+      opacity:0.75;
     }
 
-    .card.ranked {
-      border-color: #ffc857;
-      box-shadow: 0 0 0 1px rgba(255, 200, 87, 0.45), 0 12px 26px rgba(0, 0, 0, 0.82);
+    .unranked-label{
+      font-size:11px;
+      opacity:0.80;
+      letter-spacing:0.10em;
+      text-transform:uppercase;
+      margin-left:4px;
     }
 
-    .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.86);
+    .app.unranked-empty #divider,
+    .app.unranked-empty #unranked-label,
+    .app.unranked-empty #unranked-section{
+      display:none;
     }
 
-    .cover {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 3 / 4;
-      overflow: hidden;
-      background: rgba(5, 8, 22, 0.9);
+    .app.unranked-empty .grid-wrapper{
+      justify-content:center;
     }
 
-    .cover img {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      object-position: center;
-      background: rgba(5, 8, 22, 0.9);
+    .card{
+      position:relative;
+      border-radius:var(--radius);
+      overflow:hidden;
+      background:rgba(6,8,20,0.80);
+      box-shadow:0 10px 24px rgba(0,0,0,0.45);
+      border:1px solid rgba(255,255,255,0.09);
+      transform:translateZ(0);
+      padding-top:133.333%;
+      user-select:none;
     }
 
-    .overlay {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 0;
-      padding: 7px 8px 6px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: linear-gradient(
-        to bottom,
-        rgba(0, 0, 0, 0.82) 0%,
-        rgba(0, 0, 0, 0.62) 55%,
-        transparent 100%
-      );
-      z-index: 2;
+    @supports (aspect-ratio: 3 / 4){
+      .card{padding-top:0;aspect-ratio:3/4}
     }
 
-    .rank-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      padding: 2px 6px;
-      border-radius: 999px;
-      background: rgba(0, 0, 0, 0.72);
-      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
-      flex-shrink: 0;
+    .card.ranked{
+      border-color:rgba(255,200,87,0.92);
+      box-shadow:0 0 0 1px rgba(255,200,87,0.24), 0 14px 30px rgba(0,0,0,0.52);
     }
 
-    .rank-chip .hash {
-      font-size: 13px;
-      font-weight: 700;
-      color: #ffd369;
+    .rank-badge{
+      position:absolute;
+      top:10px;
+      left:10px;
+      z-index:8;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 8px;
+      border-radius:999px;
+      background:rgba(0,0,0,0.52);
+      border:1px solid rgba(255,255,255,0.10);
+      box-shadow:0 6px 14px rgba(0,0,0,0.30);
+      backdrop-filter:blur(6px);
+      -webkit-backdrop-filter:blur(6px);
     }
 
-    .rank-input {
-      width: 28px;
-      background: transparent;
-      border: none;
-      border-bottom: 2px solid rgba(255, 255, 255, 0.25);
-      color: #ffdf7b;
-      font-size: 15px;
-      font-weight: 800;
-      padding: 0 0 1px;
-      text-align: center;
-      outline: none;
-      -moz-appearance: textfield;
+    .rank-badge::before{
+      content:"#";
+      font-size:12px;
+      font-weight:900;
+      color:var(--gold2);
+      line-height:1;
+    }
+
+    .rank-input{
+      width:32px;
+      background:transparent;
+      border:none;
+      color:#ffdf7b;
+      font-size:14px;
+      font-weight:900;
+      padding:0;
+      text-align:left;
+      outline:none;
+      -moz-appearance:textfield;
+      line-height:1.05;
     }
 
     .rank-input::-webkit-outer-spin-button,
-    .rank-input::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
+    .rank-input::-webkit-inner-spin-button{
+      -webkit-appearance:none;
+      margin:0;
     }
 
-    .rank-input::placeholder {
-      color: rgba(255, 255, 255, 0.25);
+    .rank-input::placeholder{color:rgba(255,255,255,0.20)}
+
+    .info-bar{
+      position:absolute;
+      left:0;
+      right:0;
+      bottom:0;
+      z-index:7;
+      height:var(--infoH);
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      padding:0 12px 8px;
+      background:linear-gradient(180deg, rgba(0,0,0,0.00), rgba(0,0,0,0.62));
+      color:#ffffff;
+      pointer-events:none;
     }
 
-    .rank-input:focus {
-      border-bottom-color: #ffd86b;
+    .info-bar .title{
+      width:100%;
+      text-align:center;
+      display:-webkit-box;
+      -webkit-line-clamp:2;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+      font-size:14px;
+      font-weight:850;
+      line-height:1.15;
+      text-shadow:0 2px 12px rgba(0,0,0,0.75);
     }
 
-    .title {
-      flex: 1;
-      font-size: 14px;
-      font-weight: 750;
-      color: #ffffff;
-      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
-      line-height: 1.18;
-      white-space: normal;
-      word-break: break-word;
+    body.hide-titles:not(.spoiler-on) .info-bar{display:none}
+
+    .view-normal,
+    .view-spoiler{
+      position:absolute;
+      inset:0;
     }
 
-    .no-cover,
-    .spoiler-mask {
-      position: absolute;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.16em;
-      color: rgba(230, 233, 255, 0.85);
-      text-align: center;
-      padding: 0 8px;
-      z-index: 1;
+    .view-normal{display:block}
+    .view-spoiler{display:none}
+
+    body.spoiler-on .view-normal{display:none}
+    body.spoiler-on .view-spoiler{display:block}
+
+    .cover{
+      position:absolute;
+      inset:0;
+      overflow:hidden;
+      background:rgba(5,7,18,0.72);
     }
 
-    .no-cover {
-      background: repeating-linear-gradient(
-        -45deg,
-        rgba(255, 255, 255, 0.06),
-        rgba(255, 255, 255, 0.06) 6px,
-        rgba(0, 0, 0, 0.42) 6px,
-        rgba(0, 0, 0, 0.42) 12px
-      );
+    .cover-blur{
+      position:absolute;
+      inset:-22px;
+      width:calc(100% + 44px);
+      height:calc(100% + 44px);
+      object-fit:cover;
+      transform:scale(1.10);
+      filter:blur(18px) saturate(1.05);
+      opacity:0.16;
+      z-index:1;
+      pointer-events:none;
     }
 
-    .spoiler-mask {
-      background: rgba(5, 6, 14, 0.88);
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    .cover-img{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      object-position:center;
+      transform:scale(1.01);
+      z-index:2;
+      pointer-events:none;
     }
 
-    .side-menu {
-      position: fixed;
-      left: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 50;
-      font-size: 11px;
-      display: none;
+    .no-cover{
+      position:absolute;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:0 10px;
+      font-size:11px;
+      letter-spacing:0.16em;
+      text-transform:uppercase;
+      color:rgba(245,247,255,0.75);
+      background:rgba(0,0,0,0.28);
+      z-index:3;
     }
 
-    .side-handle {
-      width: 30px;
-      height: 30px;
-      border-radius: 8px;
-      background: #ffd369;
-      border: 1px solid #ffe9a5;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.85);
-      user-select: none;
-      color: #2b2130;
-      font-weight: 900;
-      font-size: 16px;
+    .spoiler-surface{
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(circle at 30% 10%, rgba(55,80,160,0.38), rgba(10,14,40,0.38)),
+        linear-gradient(180deg, rgba(7,10,24,0.94), rgba(3,5,14,0.94));
     }
 
-    .side-panel {
-      margin-top: 6px;
-      padding: 8px 10px;
-      border-radius: 12px;
-      background: rgba(4, 7, 22, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      min-width: 185px;
-      display: none;
+    .spoiler-inner{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px 16px;
+      text-align:center;
     }
 
-    .side-menu.open .side-panel {
-      display: block;
+    .logo-img{
+      max-width:94%;
+      max-height:74%;
+      width:auto;
+      height:auto;
+      object-fit:contain;
+      filter:drop-shadow(0 14px 22px rgba(0,0,0,0.55));
+      transform:translateZ(0);
+      pointer-events:none;
     }
 
-    .side-caption {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      opacity: 0.85;
-      margin-bottom: 6px;
+    body.spoiler-on .info-bar{display:none}
+
+    .side-menu{
+      position:fixed;
+      left:10px;
+      top:50%;
+      transform:translateY(-50%);
+      z-index:50;
+      font-size:11px;
+      display:none;
     }
 
-    .lang-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 6px;
-      font-size: 12px;
+    .side-handle{
+      width:30px;
+      height:30px;
+      border-radius:8px;
+      background:var(--gold2);
+      border:1px solid #ffe9a5;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      box-shadow:0 8px 20px rgba(0,0,0,0.45);
+      user-select:none;
+      color:#2b2130;
+      font-weight:900;
+      font-size:16px;
     }
 
-    .lang-select {
-      background: #050816;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      color: #f5f7ff;
-      padding: 2px 8px;
-      font-size: 11px;
-      outline: none;
+    .side-panel{
+      margin-top:6px;
+      padding:8px 10px;
+      border-radius:12px;
+      background:rgba(6,10,28,0.90);
+      border:1px solid rgba(255,255,255,0.15);
+      min-width:205px;
+      display:none;
+      box-shadow:0 14px 30px rgba(0,0,0,0.38);
     }
 
-    .toggle-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin: 4px 0 8px;
-      font-size: 12px;
+    .side-menu.open .side-panel{display:block}
+
+    .side-caption{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:0.12em;
+      opacity:0.85;
+      margin-bottom:6px;
     }
 
-    .btn-small {
-      margin-top: 4px;
-      border: none;
-      border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      background: linear-gradient(135deg, #ffd369, #ffb347);
-      color: #141414;
-      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.65);
-      width: 100%;
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:6px;
+      font-size:12px;
     }
 
-    body.spoiler-on .cover img {
-      display: none;
+    .select{
+      background:rgba(5,8,22,0.95);
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.25);
+      color:var(--text);
+      padding:4px 10px;
+      font-size:12px;
+      outline:none;
+      min-width:120px;
     }
 
-    body.spoiler-on .spoiler-mask {
-      display: none;
+    .btn-small{
+      margin-top:6px;
+      border:none;
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:11px;
+      font-weight:900;
+      cursor:pointer;
+      background:linear-gradient(135deg,var(--gold2),#ffb347);
+      color:#141414;
+      box-shadow:0 8px 18px rgba(0,0,0,0.40);
+      width:100%;
     }
 
-    body.spoiler-on .overlay {
-      top: 0;
-      bottom: 0;
-      padding: 12px 10px;
-      display: grid;
-      grid-template-rows: auto 1fr;
-      align-items: start;
-      justify-items: center;
-      background: radial-gradient(circle at top, rgba(16, 22, 55, 0.92), rgba(5, 7, 18, 0.92));
-      text-align: center;
-      gap: 10px;
+    .chosen{outline:2px solid rgba(255,211,105,0.55);outline-offset:-2px}
+    .ghost{opacity:0.45}
+
+    body.export-mode{
+      background:var(--bgSolid) !important;
     }
 
-    body.spoiler-on .rank-chip {
-      justify-self: start;
+    body.export-mode .side-menu{
+      display:none !important;
     }
 
-    body.spoiler-on .title {
-      align-self: center;
-      font-size: 15px;
-      text-align: center;
-      padding: 0 6px;
-      line-height: 1.2;
+    body.export-mode .rank-badge{
+      backdrop-filter:none !important;
+      -webkit-backdrop-filter:none !important;
     }
 
-    @media (max-width: 1500px) {
-      .grid { grid-template-columns: repeat(6, 1fr); }
+    @media (max-width: 1500px){
+      .grid{grid-template-columns:repeat(6, minmax(0, 1fr))}
     }
-    @media (max-width: 1280px) {
-      body { overflow-y: auto; }
-      .grid { grid-template-columns: repeat(4, 1fr); }
+
+    @media (max-width: 1280px){
+      body{overflow-y:auto;align-items:flex-start}
+      .content{padding:14px 14px 18px;max-width:none}
+      .grid-wrapper{transform:scale(1)}
+      .grid{grid-template-columns:repeat(4, minmax(0, 1fr))}
+    }
+
+    @media (max-width: 720px){
+      .grid{grid-template-columns:repeat(2, minmax(0, 1fr))}
+      .logo-img{max-height:68%}
+      .rank-input{width:30px}
     }
   </style>
 </head>
-<body>
 
+<body>
   <div id="config-screen" class="config-screen">
     <div class="config-title" data-i18n="configTitle">Configure your view</div>
 
@@ -517,18 +584,40 @@
       </div>
     </div>
 
+    <div>
+      <div class="config-section-title" data-i18n="titlesTitle">Titles</div>
+      <div id="cfg-hide-titles-row" class="config-toggle">
+        <span data-i18n="hideTitles">Hide titles</span>
+        <label class="switch">
+          <input type="checkbox" id="cfg-hide-titles">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
     <div class="config-actions">
       <button id="cfg-ok" class="btn" data-i18n="ok">OK</button>
     </div>
   </div>
 
   <div id="app" class="app">
-    <div class="grid-wrapper">
-      <div id="grid-ranked" class="grid"></div>
+    <div class="app-bg">
+      <img id="bg-img" crossorigin="anonymous" src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3375780/page_bg_raw.jpg?t=1766080552" alt="" />
+    </div>
 
-      <div class="subtle-divider"></div>
-      <div id="not-played-label" class="not-played-label">UNRANKED :</div>
-      <div id="grid-unranked" class="grid"></div>
+    <div class="content">
+      <div class="grid-wrapper">
+        <div class="section" id="ranked-section">
+          <div id="grid-ranked" class="grid"></div>
+        </div>
+
+        <div id="divider" class="subtle-divider"></div>
+        <div id="unranked-label" class="unranked-label">UNRANKED :</div>
+
+        <div class="section" id="unranked-section">
+          <div id="grid-unranked" class="grid"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -537,340 +626,456 @@
     <div class="side-panel">
       <div class="side-caption" data-i18n="sideOptions">OPTIONS</div>
 
-      <div class="lang-row">
+      <div class="row">
         <span data-i18n="sideLang">Language</span>
-        <select id="side-lang" class="lang-select">
+        <select id="side-lang" class="select">
           <option value="en">EN</option>
           <option value="fr">FR</option>
         </select>
       </div>
 
-      <div class="toggle-row">
+      <div class="row">
         <span data-i18n="sideSpoiler">Anti-spoiler</span>
         <label class="switch" style="transform:scale(0.8);transform-origin:right center;">
           <input type="checkbox" id="side-spoiler">
           <span class="slider"></span>
         </label>
       </div>
+
+      <div id="side-hide-titles-row" class="row">
+        <span data-i18n="sideHideTitles">Hide titles</span>
+        <label class="switch" style="transform:scale(0.8);transform-origin:right center;">
+          <input type="checkbox" id="side-hide-titles">
+          <span class="slider"></span>
+        </label>
+      </div>
+
       <button id="btn-export" class="btn-small" data-i18n="exportImage">Export PNG</button>
     </div>
   </div>
 
   <script>
-    const texts = {
-      en: {
-        configTitle: "Configure your view",
-        langTitle: "Language",
-        spoilerTitle: "Anti-spoiler",
-        spoilerDesc: "Hide covers (anti-spoiler)",
-        ok: "OK",
-        notPlayed: "UNRANKED :",
-        spoilerMask: "SPOILER",
-        sideOptions: "OPTIONS",
-        sideLang: "Language",
-        sideSpoiler: "Anti-spoiler",
-        exportImage: "Export PNG"
+    const texts={
+      en:{
+        configTitle:"Configure your view",
+        langTitle:"Language",
+        spoilerTitle:"Anti-spoiler",
+        spoilerDesc:"Hide covers (anti-spoiler)",
+        titlesTitle:"Titles",
+        hideTitles:"Hide titles",
+        ok:"OK",
+        unranked:"UNRANKED :",
+        sideOptions:"OPTIONS",
+        sideLang:"Language",
+        sideSpoiler:"Anti-spoiler",
+        sideHideTitles:"Hide titles",
+        exportImage:"Export PNG",
+        noCover:"NO COVER"
       },
-      fr: {
-        configTitle: "Configurer l'affichage",
-        langTitle: "Langue",
-        spoilerTitle: "Anti-spoiler",
-        spoilerDesc: "Masquer les jaquettes (anti-spoiler)",
-        ok: "OK",
-        notPlayed: "NON CLASSÉ(S) :",
-        spoilerMask: "SPOILER",
-        sideOptions: "OPTIONS",
-        sideLang: "Langue",
-        sideSpoiler: "Anti-spoiler",
-        exportImage: "Exporter en PNG"
+      fr:{
+        configTitle:"Configurer l'affichage",
+        langTitle:"Langue",
+        spoilerTitle:"Anti-spoiler",
+        spoilerDesc:"Masquer les jaquettes (anti-spoiler)",
+        titlesTitle:"Titres",
+        hideTitles:"Masquer les titres",
+        ok:"OK",
+        unranked:"NON CLASSÉ(S) :",
+        sideOptions:"OPTIONS",
+        sideLang:"Langue",
+        sideSpoiler:"Anti-spoiler",
+        sideHideTitles:"Masquer les titres",
+        exportImage:"Exporter en PNG",
+        noCover:"PAS D'IMAGE"
       }
     };
 
-    const games = [
-      {
-        id: "sky-1st",
-        name: "Trails in the Sky 1st Chapter",
-        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/1/1c/Trails_in_the_Sky_artwork.jpg/250px-Trails_in_the_Sky_artwork.jpg",
-        rank: 1
-      },
-      {
-        id: "sky-sc",
-        name: "Trails in the Sky SC",
-        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/0/08/Trails_in_the_Sky_SC_artwork.jpg/250px-Trails_in_the_Sky_SC_artwork.jpg",
-        rank: 2
-      },
-      {
-        id: "sky-fc",
-        name: "Trails in the Sky FC",
-        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/1/1c/Trails_in_the_Sky_artwork.jpg/250px-Trails_in_the_Sky_artwork.jpg"
-      },
-      {
-        id: "sky-3rd",
-        name: "Trails in the Sky the 3rd",
-        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/f/f6/Trails_in_the_Sky_the_3rd_artwork.jpg/250px-Trails_in_the_Sky_the_3rd_artwork.jpg"
-      },
-      {
-        id: "zero",
-        name: "Trails from Zero",
-        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/c/c7/Trails_from_Zero.jpg/250px-Trails_from_Zero.jpg"
-      },
-      {
-        id: "azure",
-        name: "Trails to Azure",
-        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/a/a9/Trails_to_Azure_Steam_artwork.jpg/250px-Trails_to_Azure_Steam_artwork.jpg"
-      },
-      {
-        id: "cs1",
-        name: "Trails of Cold Steel",
-        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/a/a7/Trails_of_Cold_Steel_Steam_artwork.jpg/250px-Trails_of_Cold_Steel_Steam_artwork.jpg"
-      },
-      {
-        id: "cs2",
-        name: "Trails of Cold Steel 2",
-        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/8/81/Trails_of_Cold_Steel_II_Steam_artwork.jpg/250px-Trails_of_Cold_Steel_II_Steam_artwork.jpg"
-      },
-      {
-        id: "cs3",
-        name: "Trails of Cold Steel 3",
-        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/1/15/Trails_of_Cold_Steel_III_Steam_artwork.jpg/250px-Trails_of_Cold_Steel_III_Steam_artwork.jpg"
-      },
-      {
-        id: "cs4",
-        name: "Trails of Cold Steel 4",
-        cover: "https://upload.wikimedia.org/wikipedia/en/c/cd/Trails_of_Cold_Steel_IV_Cover_Art.png"
-      },
-      {
-        id: "reverie",
-        name: "Trails into Reverie",
-        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/1/13/Trails_into_Reverie_Cover_Art.jpg/250px-Trails_into_Reverie_Cover_Art.jpg"
-      },
-      {
-        id: "daybreak",
-        name: "Trails through Daybreak",
-        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Trails_through_Daybreak_artwork.jpg/250px-Trails_through_Daybreak_artwork.jpg"
-      },
-      {
-        id: "daybreak2",
-        name: "Trails through Daybreak 2",
-        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/0/07/Trails_through_Daybreak_II_artwork.jpg/250px-Trails_through_Daybreak_II_artwork.jpg"
-      },
-      {
-        id: "beyond",
-        name: "Trails beyond the Horizon",
-        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/4/4a/Trails_Beyond_the_Horizon_artwork.jpg/250px-Trails_Beyond_the_Horizon_artwork.jpg"
-      }
+    const games=[
+      {id:"sky-1st",name:"Trails in the Sky 1st Chapter",cover:"https://upload.wikimedia.org/wikipedia/en/thumb/1/1c/Trails_in_the_Sky_artwork.jpg/250px-Trails_in_the_Sky_artwork.jpg",logo:"https://static.wikia.nocookie.net/kiseki/images/4/45/Sora_no_Kiseki_the_1st_Logo_%28En%29.png/revision/latest/scale-to-width-down/1000?cb=20241223232411",rank:1},
+      {id:"sky-sc",name:"Trails in the Sky SC",cover:"https://upload.wikimedia.org/wikipedia/en/thumb/0/08/Trails_in_the_Sky_SC_artwork.jpg/250px-Trails_in_the_Sky_SC_artwork.jpg",logo:"https://static.wikia.nocookie.net/kiseki/images/7/73/Trails_in_the_Sky_SC_Logo.png/revision/latest?cb=20220219123126",rank:2},
+      {id:"sky-fc",name:"Trails in the Sky FC",cover:"https://upload.wikimedia.org/wikipedia/en/thumb/1/1c/Trails_in_the_Sky_artwork.jpg/250px-Trails_in_the_Sky_artwork.jpg",logo:"https://static.wikia.nocookie.net/kiseki/images/2/20/Trails_in_the_Sky_FC_logo.png/revision/latest?cb=20220219122845"},
+      {id:"sky-3rd",name:"Trails in the Sky the 3rd",cover:"https://upload.wikimedia.org/wikipedia/en/thumb/f/f6/Trails_in_the_Sky_the_3rd_artwork.jpg/250px-Trails_in_the_Sky_the_3rd_artwork.jpg",logo:"https://static.wikia.nocookie.net/kiseki/images/e/e5/Trails_in_the_Sky_3rd_logo.png/revision/latest?cb=20220219124002"},
+      {id:"zero",name:"Trails from Zero",cover:"https://upload.wikimedia.org/wikipedia/en/thumb/c/c7/Trails_from_Zero.jpg/250px-Trails_from_Zero.jpg",logo:"https://static.wikia.nocookie.net/kiseki/images/c/cd/Trails_from_Zero_-_Light_BG_%28Logo%29.png/revision/latest/scale-to-width-down/1000?cb=20210625055653"},
+      {id:"azure",name:"Trails to Azure",cover:"https://upload.wikimedia.org/wikipedia/en/thumb/a/a9/Trails_to_Azure_Steam_artwork.jpg/250px-Trails_to_Azure_Steam_artwork.jpg",logo:"https://static.wikia.nocookie.net/kiseki/images/7/75/Trails_to_Azure_-_Light_BG_%28Logo%29.png/revision/latest/scale-to-width-down/1000?cb=20210625055711"},
+      {id:"cs1",name:"Trails of Cold Steel",cover:"https://upload.wikimedia.org/wikipedia/en/thumb/a/a7/Trails_of_Cold_Steel_Steam_artwork.jpg/250px-Trails_of_Cold_Steel_Steam_artwork.jpg",logo:"https://static.wikia.nocookie.net/kiseki/images/f/ff/Trails_of_Cold_Steel_Logo_%28Sen%29.png/revision/latest?cb=20170526122740"},
+      {id:"cs2",name:"Trails of Cold Steel 2",cover:"https://upload.wikimedia.org/wikipedia/en/thumb/8/81/Trails_of_Cold_Steel_II_Steam_artwork.jpg/250px-Trails_of_Cold_Steel_II_Steam_artwork.jpg",logo:"https://static.wikia.nocookie.net/kiseki/images/7/73/Trails_of_Cold_Steel_II_Logo_%28Sen_II%29.png/revision/latest/scale-to-width-down/1000?cb=20170526155421"},
+      {id:"cs3",name:"Trails of Cold Steel 3",cover:"https://upload.wikimedia.org/wikipedia/en/thumb/1/15/Trails_of_Cold_Steel_III_Steam_artwork.jpg/250px-Trails_of_Cold_Steel_III_Steam_artwork.jpg",logo:"https://static.wikia.nocookie.net/kiseki/images/e/ef/Trails_of_Cold_Steel_III_logo.png/revision/latest/scale-to-width-down/1000?cb=20190312132538"},
+      {id:"cs4",name:"Trails of Cold Steel 4",cover:"https://upload.wikimedia.org/wikipedia/en/c/cd/Trails_of_Cold_Steel_IV_Cover_Art.png",logo:"https://static.wikia.nocookie.net/kiseki/images/e/e1/Trails_of_Cold_Steel_IV_logo.png/revision/latest?cb=20200513014157"},
+      {id:"reverie",name:"Trails into Reverie",cover:"https://upload.wikimedia.org/wikipedia/en/thumb/1/13/Trails_into_Reverie_Cover_Art.jpg/250px-Trails_into_Reverie_Cover_Art.jpg",logo:"https://static.wikia.nocookie.net/kiseki/images/3/35/Trails_into_Reverie_-_Light_BG_%28Logo%29.webp/revision/latest/scale-to-width-down/1000?cb=20210625131458"},
+      {id:"daybreak",name:"Trails through Daybreak",cover:"https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Trails_through_Daybreak_artwork.jpg/250px-Trails_through_Daybreak_artwork.jpg",logo:"https://static.wikia.nocookie.net/kiseki/images/e/ed/Trails_Through_Daybreak_long_logo.webp/revision/latest?cb=20240121111226"},
+      {id:"daybreak2",name:"Trails through Daybreak 2",cover:"https://upload.wikimedia.org/wikipedia/en/thumb/0/07/Trails_through_Daybreak_II_artwork.jpg/250px-Trails_through_Daybreak_II_artwork.jpg",logo:"https://static.wikia.nocookie.net/kiseki/images/0/00/Trails_Through_Daybreak_II_logo.png/revision/latest/scale-to-width-down/1000?cb=20240706153858"},
+      {id:"beyond",name:"Trails beyond the Horizon",cover:"https://upload.wikimedia.org/wikipedia/en/thumb/4/4a/Trails_Beyond_the_Horizon_artwork.jpg/250px-Trails_Beyond_the_Horizon_artwork.jpg",logo:"https://static.wikia.nocookie.net/kiseki/images/a/ae/Trails_beyond_the_Horizon_%28Logo%29.webp/revision/latest/scale-to-width-down/1000?cb=20250330214238"}
     ];
 
-    const rankedGrid = document.getElementById("grid-ranked");
-    const unrankedGrid = document.getElementById("grid-unranked");
+    const rankedGrid=document.getElementById("grid-ranked");
+    const unrankedGrid=document.getElementById("grid-unranked");
 
-    let currentLang = "en";
-    let spoilerOn = false;
+    const cfgScreen=document.getElementById("config-screen");
+    const app=document.getElementById("app");
+    const cfgOk=document.getElementById("cfg-ok");
+    const cfgSpoiler=document.getElementById("cfg-spoiler");
+    const cfgHideTitles=document.getElementById("cfg-hide-titles");
+    const cfgHideTitlesRow=document.getElementById("cfg-hide-titles-row");
 
-    function applyLanguage() {
-      const t = texts[currentLang];
-      document.documentElement.lang = currentLang;
-      document.getElementById("not-played-label").textContent = t.notPlayed;
+    const sideMenu=document.getElementById("side-menu");
+    const sideHandle=document.getElementById("side-handle");
+    const sideSpoiler=document.getElementById("side-spoiler");
+    const sideLang=document.getElementById("side-lang");
+    const sideHideTitles=document.getElementById("side-hide-titles");
+    const sideHideTitlesRow=document.getElementById("side-hide-titles-row");
+    const btnExport=document.getElementById("btn-export");
 
-      document.querySelectorAll("[data-i18n]").forEach(el => {
-        const key = el.getAttribute("data-i18n");
-        if (t[key]) el.textContent = t[key];
+    let currentLang="en";
+    let spoilerOn=false;
+    let hideTitles=false;
+
+    const pendingTimers=new WeakMap();
+
+    function applyLanguage(){
+      const t=texts[currentLang];
+      document.documentElement.lang=currentLang;
+      document.getElementById("unranked-label").textContent=t.unranked;
+      document.querySelectorAll("[data-i18n]").forEach(el=>{
+        const key=el.getAttribute("data-i18n");
+        if(t[key]) el.textContent=t[key];
       });
-
-      document.querySelectorAll(".spoiler-mask").forEach(el => {
-        el.textContent = t.spoilerMask;
-      });
+      document.querySelectorAll(".no-cover").forEach(el=>{el.textContent=t.noCover});
     }
 
-    function updateSpoilerState() {
-      document.body.classList.toggle("spoiler-on", spoilerOn);
-      document.getElementById("side-spoiler").checked = spoilerOn;
-      document.getElementById("cfg-spoiler").checked = spoilerOn;
+    function applyTitleControls(){
+      const disabled=spoilerOn;
+      cfgHideTitles.disabled=disabled;
+      sideHideTitles.disabled=disabled;
+      cfgHideTitlesRow.classList.toggle("disabled-row",disabled);
+      sideHideTitlesRow.classList.toggle("disabled-row",disabled);
+      if(disabled){
+        hideTitles=false;
+        cfgHideTitles.checked=false;
+        sideHideTitles.checked=false;
+      }else{
+        cfgHideTitles.checked=hideTitles;
+        sideHideTitles.checked=hideTitles;
+      }
+      document.body.classList.toggle("hide-titles",hideTitles && !spoilerOn);
     }
 
-    function createCard(game, index) {
-      const card = document.createElement("div");
-      card.className = "card";
-      card.dataset.id = game.id;
-      card.dataset.index = index;
+    function updateSpoilerState(){
+      document.body.classList.toggle("spoiler-on",spoilerOn);
+      sideSpoiler.checked=spoilerOn;
+      cfgSpoiler.checked=spoilerOn;
+      applyTitleControls();
+    }
 
-      if (game.rank) {
-        card.dataset.rank = game.rank;
+    function updateSectionsVisibility(){
+      const unrankedCount=unrankedGrid.querySelectorAll(".card").length;
+      app.classList.toggle("unranked-empty",unrankedCount===0);
+    }
+
+    function getActiveRankInput(){
+      const el=document.activeElement;
+      if(el && el.classList && el.classList.contains("rank-input")) return el;
+      return null;
+    }
+
+    function captureFocusState(){
+      const input=getActiveRankInput();
+      if(!input) return null;
+      return {input,start:input.selectionStart,end:input.selectionEnd};
+    }
+
+    function restoreFocusState(state){
+      if(!state) return;
+      try{
+        state.input.focus({preventScroll:true});
+        if(state.start!=null && state.end!=null) state.input.setSelectionRange(state.start,state.end);
+      }catch(e){}
+    }
+
+    function normalizeRanks(finalizeActive){
+      const activeInput=getActiveRankInput();
+      const activeCard=activeInput ? activeInput.closest(".card") : null;
+
+      const rankedCards=Array.from(rankedGrid.querySelectorAll(".card"));
+      rankedCards.forEach((card,idx)=>{
+        const r=idx+1;
+        card.dataset.rank=String(r);
         card.classList.add("ranked");
-      } else {
-        card.dataset.rank = "";
+        const input=card.querySelector(".rank-input");
+        if(!input) return;
+        if(!finalizeActive && activeCard===card) return;
+        input.value=String(r);
+      });
+
+      const unrankedCards=Array.from(unrankedGrid.querySelectorAll(".card"));
+      unrankedCards.forEach(card=>{
+        card.dataset.rank="";
+        card.classList.remove("ranked");
+        const input=card.querySelector(".rank-input");
+        if(!input) return;
+        if(!finalizeActive && activeCard===card) return;
+        input.value="";
+      });
+
+      updateSectionsVisibility();
+    }
+
+    function clearPending(card){
+      const t=pendingTimers.get(card);
+      if(t) clearTimeout(t);
+      pendingTimers.delete(card);
+    }
+
+    function moveToUnranked(card,finalizeActive,focusState){
+      clearPending(card);
+      if(card.parentElement!==unrankedGrid) unrankedGrid.appendChild(card);
+      card.dataset.rank="";
+      card.classList.remove("ranked");
+      normalizeRanks(finalizeActive);
+      if(!finalizeActive) restoreFocusState(focusState);
+    }
+
+    function placeInRanked(card,rank,finalizeActive,focusState){
+      clearPending(card);
+      if(card.parentElement!==rankedGrid) rankedGrid.appendChild(card);
+
+      const others=Array.from(rankedGrid.querySelectorAll(".card")).filter(c=>c!==card);
+      const pos=Math.max(1,Math.min(rank,others.length+1));
+
+      if(pos-1>=others.length) rankedGrid.appendChild(card);
+      else rankedGrid.insertBefore(card,others[pos-1]);
+
+      normalizeRanks(finalizeActive);
+      if(!finalizeActive) restoreFocusState(focusState);
+    }
+
+    function applyRankValue(card,input,finalizeActive){
+      clearPending(card);
+      const focusState=finalizeActive ? null : captureFocusState();
+
+      let v=String(input.value||"").replace(/[^\d]/g,"").slice(0,2);
+      if(v!==input.value){
+        const s=input.selectionStart||0;
+        input.value=v;
+        try{
+          const p=Math.min(s,v.length);
+          input.setSelectionRange(p,p);
+        }catch(e){}
       }
 
-      card.innerHTML = `
-        <div class="cover">
-          <img src="${game.cover}" alt="${game.name} cover" />
-          <div class="overlay">
-            <div class="rank-chip">
-              <span class="hash">#</span>
-              <input class="rank-input" type="text" inputmode="numeric" maxlength="2" />
-            </div>
-            <div class="title">${game.name}</div>
+      if(v===""){
+        moveToUnranked(card,finalizeActive,focusState);
+        return;
+      }
+
+      const r=parseInt(v,10);
+      if(!Number.isFinite(r) || r<=0){
+        input.value="";
+        moveToUnranked(card,true,null);
+        return;
+      }
+
+      placeInRanked(card,r,finalizeActive,focusState);
+    }
+
+    function scheduleApply(card,input,finalizeActive){
+      clearPending(card);
+      const delay=finalizeActive ? 0 : 300;
+      const t=setTimeout(()=>applyRankValue(card,input,finalizeActive),delay);
+      pendingTimers.set(card,t);
+    }
+
+    function createCard(game,index){
+      const card=document.createElement("div");
+      card.className="card";
+      card.dataset.id=game.id;
+      card.dataset.index=index;
+      card.dataset.rank=game.rank ? String(game.rank) : "";
+      if(game.rank) card.classList.add("ranked");
+
+      const safeName=String(game.name||"");
+      const safeCover=String(game.cover||"");
+      const safeLogo=String(game.logo||"");
+
+      card.innerHTML=`
+        <div class="rank-badge">
+          <input class="rank-input" type="text" inputmode="numeric" maxlength="2" />
+        </div>
+
+        <div class="info-bar">
+          <div class="title">${safeName}</div>
+        </div>
+
+        <div class="view-normal">
+          <div class="cover">
+            <img class="cover-blur" crossorigin="anonymous" src="${safeCover}" alt="" />
+            <img class="cover-img" crossorigin="anonymous" src="${safeCover}" alt="${safeName} cover" />
+            <div class="no-cover">NO COVER</div>
           </div>
-          <div class="no-cover">NO COVER</div>
-          <div class="spoiler-mask"></div>
+        </div>
+
+        <div class="view-spoiler">
+          <div class="spoiler-surface"></div>
+          <div class="spoiler-inner">
+            <img class="logo-img" crossorigin="anonymous" src="${safeLogo}" alt="${safeName} logo" />
+          </div>
         </div>
       `;
 
-      const input = card.querySelector(".rank-input");
-      if (game.rank) input.value = game.rank;
+      const input=card.querySelector(".rank-input");
+      if(game.rank) input.value=String(game.rank);
 
-      input.addEventListener("input", () => handleRankChange(card, input));
-      input.addEventListener("blur", () => handleRankChange(card, input));
-      input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") input.blur();
-      });
+      const blurImg=card.querySelector(".cover-blur");
+      const mainImg=card.querySelector(".cover-img");
+      const noCover=card.querySelector(".no-cover");
+      const logoImg=card.querySelector(".logo-img");
 
-      const img = card.querySelector("img");
-      const noCover = card.querySelector(".no-cover");
-      img.addEventListener("error", () => {
-        img.style.display = "none";
-        noCover.style.display = "flex";
+      function showNoCover(){
+        blurImg.style.display="none";
+        mainImg.style.display="none";
+        noCover.style.display="flex";
+      }
+
+      mainImg.addEventListener("error",showNoCover);
+      blurImg.addEventListener("error",()=>{blurImg.style.display="none"});
+      logoImg.addEventListener("error",()=>{logoImg.style.display="none"});
+
+      input.addEventListener("input",()=>scheduleApply(card,input,false));
+      input.addEventListener("blur",()=>scheduleApply(card,input,true));
+      input.addEventListener("keydown",(e)=>{
+        if(e.key==="Enter"){
+          e.preventDefault();
+          scheduleApply(card,input,true);
+          input.blur();
+        }
       });
 
       return card;
     }
 
-    function handleRankChange(card, input) {
-      let value = input.value.trim();
-      if (value === "") {
-        card.dataset.rank = "";
-        card.classList.remove("ranked");
-        moveToUnranked(card);
-        return;
-      }
-
-      const rank = parseInt(value, 10);
-      if (!Number.isFinite(rank) || rank <= 0) {
-        input.value = "";
-        card.dataset.rank = "";
-        card.classList.remove("ranked");
-        moveToUnranked(card);
-        return;
-      }
-
-      card.dataset.rank = String(rank);
-      card.classList.add("ranked");
-      moveToRanked(card);
-      sortRanked();
-    }
-
-    function moveToRanked(card) {
-      if (card.parentElement !== rankedGrid) rankedGrid.appendChild(card);
-      sortRanked();
-    }
-
-    function moveToUnranked(card) {
-      if (card.parentElement !== unrankedGrid) unrankedGrid.appendChild(card);
-      sortUnranked();
-    }
-
-    function sortRanked() {
-      const cards = Array.from(rankedGrid.querySelectorAll(".card"));
-      cards.sort((a, b) => {
-        const ra = parseInt(a.dataset.rank || "0", 10) || 0;
-        const rb = parseInt(b.dataset.rank || "0", 10) || 0;
-        if (ra !== rb) return ra - rb;
-        const ia = parseInt(a.dataset.index || "0", 10);
-        const ib = parseInt(b.dataset.index || "0", 10);
-        return ia - ib;
-      });
-      cards.forEach(c => rankedGrid.appendChild(c));
-    }
-
-    function sortUnranked() {
-      const cards = Array.from(unrankedGrid.querySelectorAll(".card"));
-      cards.sort((a, b) => {
-        const ia = parseInt(a.dataset.index || "0", 10);
-        const ib = parseInt(b.dataset.index || "0", 10);
-        return ia - ib;
-      });
-      cards.forEach(c => unrankedGrid.appendChild(c));
-    }
-
-    games.forEach((g, i) => {
-      const card = createCard(g, i);
-      if (g.rank) rankedGrid.appendChild(card);
+    games.forEach((g,i)=>{
+      const card=createCard(g,i);
+      if(g.rank) rankedGrid.appendChild(card);
       else unrankedGrid.appendChild(card);
     });
 
-    sortRanked();
-    sortUnranked();
+    normalizeRanks(true);
 
-    const cfgScreen = document.getElementById("config-screen");
-    const app = document.getElementById("app");
-    const cfgOk = document.getElementById("cfg-ok");
-    const sideMenu = document.getElementById("side-menu");
-    const sideHandle = document.getElementById("side-handle");
-    const sideSpoiler = document.getElementById("side-spoiler");
-    const btnExport = document.getElementById("btn-export");
-    const sideLang = document.getElementById("side-lang");
+    function initSortable(){
+      if(!window.Sortable) return;
+      const group={name:"trails",pull:true,put:true};
 
-    cfgOk.addEventListener("click", () => {
-      const langInput = document.querySelector('input[name="lang"]:checked');
-      currentLang = langInput ? langInput.value : "en";
-      sideLang.value = currentLang;
+      new Sortable(rankedGrid,{
+        group,
+        animation:160,
+        filter:"input, textarea, button, select, option",
+        preventOnFilter:false,
+        chosenClass:"chosen",
+        ghostClass:"ghost",
+        onAdd:()=>normalizeRanks(true),
+        onUpdate:()=>normalizeRanks(true),
+        onEnd:()=>normalizeRanks(true)
+      });
 
-      spoilerOn = document.getElementById("cfg-spoiler").checked;
+      new Sortable(unrankedGrid,{
+        group,
+        animation:160,
+        filter:"input, textarea, button, select, option",
+        preventOnFilter:false,
+        chosenClass:"chosen",
+        ghostClass:"ghost",
+        onAdd:(evt)=>moveToUnranked(evt.item,true,null),
+        onUpdate:()=>normalizeRanks(true),
+        onEnd:()=>normalizeRanks(true)
+      });
+    }
 
-      cfgScreen.style.display = "none";
+    initSortable();
+
+    cfgOk.addEventListener("click",()=>{
+      const langInput=document.querySelector('input[name="lang"]:checked');
+      currentLang=langInput ? langInput.value : "en";
+      sideLang.value=currentLang;
+
+      spoilerOn=cfgSpoiler.checked;
+      hideTitles=cfgHideTitles.checked;
+
+      cfgScreen.style.display="none";
       app.classList.add("visible");
-      sideMenu.style.display = "block";
+      sideMenu.style.display="block";
 
       applyLanguage();
       updateSpoilerState();
-
-      document.body.style.alignItems = "flex-start";
-      document.body.style.justifyContent = "center";
+      normalizeRanks(true);
     });
 
-    sideHandle.addEventListener("click", () => {
+    sideHandle.addEventListener("click",()=>{
       sideMenu.classList.toggle("open");
     });
 
-    sideSpoiler.addEventListener("change", () => {
-      spoilerOn = sideSpoiler.checked;
+    sideSpoiler.addEventListener("change",()=>{
+      spoilerOn=sideSpoiler.checked;
       updateSpoilerState();
     });
 
-    sideLang.addEventListener("change", () => {
-      currentLang = sideLang.value;
+    sideLang.addEventListener("change",()=>{
+      currentLang=sideLang.value;
       applyLanguage();
     });
 
-    function nextFrame() {
-      return new Promise(resolve => requestAnimationFrame(() => resolve()));
+    sideHideTitles.addEventListener("change",()=>{
+      if(sideHideTitles.disabled) return;
+      hideTitles=sideHideTitles.checked;
+      applyTitleControls();
+    });
+
+    cfgHideTitles.addEventListener("change",()=>{
+      if(cfgHideTitles.disabled) return;
+      hideTitles=cfgHideTitles.checked;
+      applyTitleControls();
+    });
+
+    function syncConfigDisable(){
+      const disabled=cfgSpoiler.checked;
+      cfgHideTitles.disabled=disabled;
+      cfgHideTitlesRow.classList.toggle("disabled-row",disabled);
+      if(disabled) cfgHideTitles.checked=false;
     }
 
-    btnExport.addEventListener("click", async () => {
-      if (!window.html2canvas) return;
+    cfgSpoiler.addEventListener("change",syncConfigDisable);
+    syncConfigDisable();
 
-      const target = document.getElementById("app");
+    function waitForImages(root){
+      const imgs=Array.from(root.querySelectorAll("img"));
+      return Promise.all(imgs.map(img=>new Promise(resolve=>{
+        if(img.complete) return resolve();
+        img.onload=()=>resolve();
+        img.onerror=()=>resolve();
+      })));
+    }
+
+    btnExport.addEventListener("click",async()=>{
+      if(!window.html2canvas) return;
+
       sideMenu.classList.remove("open");
       document.body.classList.add("export-mode");
-      await nextFrame();
 
-      try {
-        const canvas = await html2canvas(target, {
-          useCORS: true,
-          backgroundColor: "#0b1126",
-          scale: 2,
-          onclone: (doc) => {
-            doc.body.classList.add("export-mode");
-          }
+      try{
+        await waitForImages(app);
+
+        const canvas=await html2canvas(app,{
+          useCORS:true,
+          allowTaint:false,
+          backgroundColor:null,
+          scale:2
         });
 
-        const link = document.createElement("a");
-        link.download = "top-trails.png";
-        link.href = canvas.toDataURL("image/png");
+        const link=document.createElement("a");
+        link.download="top-trails.png";
+        link.href=canvas.toDataURL("image/png");
         link.click();
-      } catch (err) {
-        console.error("html2canvas error:", err);
-      } finally {
+      }catch(err){
+        console.error("html2canvas error:",err);
+      }finally{
         document.body.classList.remove("export-mode");
       }
     });
