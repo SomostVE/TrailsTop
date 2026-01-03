@@ -213,9 +213,7 @@
       justify-content:flex-start;
     }
 
-    .section{
-      width:100%;
-    }
+    .section{width:100%}
 
     .grid{
       display:grid;
@@ -277,9 +275,10 @@
       display:inline-flex;
       align-items:center;
       gap:6px;
-      padding:4px 8px;
+      padding:2px 6px;
+      min-height:18px;
       border-radius:999px;
-      background:rgba(0,0,0,0.52);
+      background:rgba(0,0,0,0.44);
       border:1px solid rgba(255,255,255,0.10);
       box-shadow:0 6px 14px rgba(0,0,0,0.30);
       backdrop-filter:blur(6px);
@@ -292,6 +291,7 @@
       font-weight:900;
       color:var(--gold2);
       line-height:1;
+      transform:translateY(-0.5px);
     }
 
     .rank-input{
@@ -305,7 +305,9 @@
       text-align:left;
       outline:none;
       -moz-appearance:textfield;
-      line-height:1.05;
+      line-height:1;
+      height:16px;
+      display:block;
     }
 
     .rank-input::-webkit-outer-spin-button,
@@ -317,15 +319,16 @@
     .rank-input::placeholder{color:rgba(255,255,255,0.20)}
 
     .rank-text{
-      display:none;
       color:#ffdf7b;
       font-size:14px;
       font-weight:900;
       line-height:1;
+      height:16px;
+      display:block;
+      transform:translateY(-0.5px);
+      min-width:16px;
+      text-align:left;
     }
-
-    body.export-mode .rank-input{display:none !important}
-    body.export-mode .rank-text{display:inline-block !important}
 
     .info-bar{
       position:absolute;
@@ -535,7 +538,7 @@
     .ghost{opacity:0.45}
 
     body.export-mode{
-      background:var(--bgSolid) !important;
+      background:#0B1020 !important;
     }
 
     body.export-mode .side-menu{
@@ -567,7 +570,7 @@
 </head>
 
 <body>
-  <div id="config-screen" class="config-screen">
+  <div id="config-screen" class="config-screen" data-ignore-export="true">
     <div class="config-title" data-i18n="configTitle">Configure your view</div>
 
     <div>
@@ -632,7 +635,7 @@
     </div>
   </div>
 
-  <div id="side-menu" class="side-menu">
+  <div id="side-menu" class="side-menu" data-ignore-export="true">
     <div id="side-handle" class="side-handle">☰</div>
     <div class="side-panel">
       <div class="side-caption" data-i18n="sideOptions">OPTIONS</div>
@@ -812,14 +815,9 @@
         card.dataset.rank=String(r);
         card.classList.add("ranked");
         const input=card.querySelector(".rank-input");
-        if(input){
-          if(!finalizeActive && activeCard===card){
-          }else{
-            input.value=String(r);
-          }
-        }
-        const label=card.querySelector(".rank-text");
-        if(label) label.textContent=String(r);
+        if(!input) return;
+        if(!finalizeActive && activeCard===card) return;
+        input.value=String(r);
       });
 
       const unrankedCards=Array.from(unrankedGrid.querySelectorAll(".card"));
@@ -827,14 +825,9 @@
         card.dataset.rank="";
         card.classList.remove("ranked");
         const input=card.querySelector(".rank-input");
-        if(input){
-          if(!finalizeActive && activeCard===card){
-          }else{
-            input.value="";
-          }
-        }
-        const label=card.querySelector(".rank-text");
-        if(label) label.textContent="";
+        if(!input) return;
+        if(!finalizeActive && activeCard===card) return;
+        input.value="";
       });
 
       updateSectionsVisibility();
@@ -919,7 +912,6 @@
 
       card.innerHTML=`
         <div class="rank-badge">
-          <span class="rank-text"></span>
           <input class="rank-input" type="text" inputmode="numeric" maxlength="2" />
         </div>
 
@@ -944,13 +936,7 @@
       `;
 
       const input=card.querySelector(".rank-input");
-      const label=card.querySelector(".rank-text");
-      if(game.rank){
-        input.value=String(game.rank);
-        if(label) label.textContent=String(game.rank);
-      }else{
-        if(label) label.textContent="";
-      }
+      if(game.rank) input.value=String(game.rank);
 
       const blurImg=card.querySelector(".cover-blur");
       const mainImg=card.querySelector(".cover-img");
@@ -1073,50 +1059,71 @@
     syncConfigDisable();
 
     async function waitForImages(root){
-      const imgs=Array.from(root.querySelectorAll("img"));
-      await Promise.all(imgs.map(img=>{
-        if(img.complete) return Promise.resolve();
-        return new Promise(res=>{
-          img.addEventListener("load",res,{once:true});
-          img.addEventListener("error",res,{once:true});
+      const imgs = Array.from(root.querySelectorAll("img"));
+      await Promise.all(imgs.map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(res => {
+          img.addEventListener("load", res, { once:true });
+          img.addEventListener("error", res, { once:true });
         });
       }));
     }
 
     async function exportPNG(){
-      const root=document.getElementById("app");
-      try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch{}
-      await waitForImages(root);
+      if(!window.html2canvas) return;
 
-      try{
-        const canvas=await html2canvas(root,{
-          backgroundColor:"#0B1020",
-          useCORS:true,
-          allowTaint:false,
-          scale:2,
-          logging:false,
-          ignoreElements:(el)=>el && el.dataset && el.dataset.ignoreExport==="true",
-          onclone:(doc)=>{
+      try{ sideMenu.classList.remove("open"); }catch(e){}
+      document.body.classList.add("export-mode");
+
+      try {
+        try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(e){}
+        await waitForImages(app);
+
+        const canvas = await html2canvas(app, {
+          backgroundColor: "#0B1020",
+          useCORS: true,
+          allowTaint: false,
+          scale: 2,
+          logging: false,
+          ignoreElements: (el) => el && el.dataset && el.dataset.ignoreExport === "true",
+          onclone: (doc) => {
             doc.body.classList.add("export-mode");
-            doc.querySelectorAll('[data-ignore-export="true"]').forEach(n=>n.remove());
-            doc.querySelectorAll("img").forEach(img=>img.setAttribute("crossorigin","anonymous"));
+            doc.querySelectorAll('[data-ignore-export="true"]').forEach(n => n.remove());
+            doc.querySelectorAll("img").forEach(img => img.setAttribute("crossorigin","anonymous"));
+
+            doc.querySelectorAll(".rank-badge").forEach(badge=>{
+              const input = badge.querySelector(".rank-input");
+              if(!input) return;
+              const v = String(input.value||"").trim();
+              const span = doc.createElement("span");
+              span.className = "rank-text";
+              span.textContent = v;
+              input.style.display = "none";
+              badge.appendChild(span);
+            });
+
+            doc.querySelectorAll("*").forEach(el=>{
+              const r = el.getBoundingClientRect();
+              if(r.width===0 || r.height===0){
+                el.style.backgroundImage = "none";
+              }
+            });
           }
         });
 
-        const a=document.createElement("a");
-        a.download="TopTrails.png";
-        a.href=canvas.toDataURL("image/png");
+        const a = document.createElement("a");
+        a.download = "TopTrails.png";
+        a.href = canvas.toDataURL("image/png");
         a.click();
-      }catch(err){
-        console.error("Export failed:",err);
+      } catch(err) {
+        console.error("Export failed:", err);
         alert("Export échoué. Ouvre la console pour le détail (F12).");
+      } finally {
+        document.body.classList.remove("export-mode");
       }
     }
 
-    btnExport.addEventListener("click",()=>{
-      sideMenu.classList.remove("open");
-      exportPNG();
-    });
+    btnExport.addEventListener("click", exportPNG);
 
     applyLanguage();
   </script>
