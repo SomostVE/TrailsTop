@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="referrer" content="no-referrer" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 
@@ -213,9 +214,7 @@
       justify-content:flex-start;
     }
 
-    .section{
-      width:100%;
-    }
+    .section{width:100%}
 
     .grid{
       display:grid;
@@ -556,7 +555,7 @@
 </head>
 
 <body>
-  <div id="config-screen" class="config-screen">
+  <div id="config-screen" class="config-screen" data-ignore-export="true">
     <div class="config-title" data-i18n="configTitle">Configure your view</div>
 
     <div>
@@ -602,7 +601,7 @@
 
   <div id="app" class="app">
     <div class="app-bg">
-      <img id="bg-img" crossorigin="anonymous" src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3375780/page_bg_raw.jpg?t=1766080552" alt="" />
+      <img id="bg-img" referrerpolicy="no-referrer" src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3375780/page_bg_raw.jpg?t=1766080552" alt="" />
     </div>
 
     <div class="content">
@@ -621,7 +620,7 @@
     </div>
   </div>
 
-  <div id="side-menu" class="side-menu">
+  <div id="side-menu" class="side-menu" data-ignore-export="true">
     <div id="side-handle" class="side-handle">☰</div>
     <div class="side-panel">
       <div class="side-caption" data-i18n="sideOptions">OPTIONS</div>
@@ -907,8 +906,8 @@
 
         <div class="view-normal">
           <div class="cover">
-            <img class="cover-blur" crossorigin="anonymous" src="${safeCover}" alt="" />
-            <img class="cover-img" crossorigin="anonymous" src="${safeCover}" alt="${safeName} cover" />
+            <img class="cover-blur" referrerpolicy="no-referrer" src="${safeCover}" alt="" />
+            <img class="cover-img" referrerpolicy="no-referrer" src="${safeCover}" alt="${safeName} cover" />
             <div class="no-cover">NO COVER</div>
           </div>
         </div>
@@ -916,7 +915,7 @@
         <div class="view-spoiler">
           <div class="spoiler-surface"></div>
           <div class="spoiler-inner">
-            <img class="logo-img" crossorigin="anonymous" src="${safeLogo}" alt="${safeName} logo" />
+            <img class="logo-img" referrerpolicy="no-referrer" src="${safeLogo}" alt="${safeName} logo" />
           </div>
         </div>
       `;
@@ -1044,40 +1043,51 @@
     cfgSpoiler.addEventListener("change",syncConfigDisable);
     syncConfigDisable();
 
-    function waitForImages(root){
-      const imgs=Array.from(root.querySelectorAll("img"));
-      return Promise.all(imgs.map(img=>new Promise(resolve=>{
-        if(img.complete) return resolve();
-        img.onload=()=>resolve();
-        img.onerror=()=>resolve();
-      })));
+    async function waitForImages(root){
+      const imgs = Array.from(root.querySelectorAll("img"));
+      await Promise.all(imgs.map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(res => {
+          img.addEventListener("load", res, { once:true });
+          img.addEventListener("error", res, { once:true });
+        });
+      }));
     }
 
-    btnExport.addEventListener("click",async()=>{
-      if(!window.html2canvas) return;
+    async function exportPNG(){
+      const appEl = document.getElementById("app");
 
-      sideMenu.classList.remove("open");
-      document.body.classList.add("export-mode");
+      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch {}
+      await waitForImages(appEl);
 
       try{
-        await waitForImages(app);
-
-        const canvas=await html2canvas(app,{
-          useCORS:true,
-          allowTaint:false,
-          backgroundColor:null,
-          scale:2
+        const canvas = await html2canvas(appEl, {
+          backgroundColor: "#0B1020",
+          useCORS: true,
+          allowTaint: false,
+          scale: 2,
+          logging: false,
+          ignoreElements: (el) => el && el.dataset && el.dataset.ignoreExport === "true",
+          onclone: (doc) => {
+            doc.body.classList.add("export-mode");
+            doc.querySelectorAll('[data-ignore-export="true"]').forEach(n => n.remove());
+            doc.querySelectorAll("img").forEach(img => img.setAttribute("crossorigin","anonymous"));
+          }
         });
 
-        const link=document.createElement("a");
-        link.download="top-trails.png";
-        link.href=canvas.toDataURL("image/png");
-        link.click();
+        const a = document.createElement("a");
+        a.download = "TopTrails.png";
+        a.href = canvas.toDataURL("image/png");
+        a.click();
       }catch(err){
-        console.error("html2canvas error:",err);
-      }finally{
-        document.body.classList.remove("export-mode");
+        console.error("Export failed:", err);
+        alert("Export échoué. Ouvre la console pour le détail (F12).");
       }
+    }
+
+    btnExport.addEventListener("click",()=>{
+      sideMenu.classList.remove("open");
+      exportPNG();
     });
 
     applyLanguage();
