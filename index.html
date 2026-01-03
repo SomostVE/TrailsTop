@@ -275,8 +275,8 @@
       display:inline-flex;
       align-items:center;
       gap:6px;
-      padding:2px 6px;
-      min-height:18px;
+      padding:1px 6px;
+      min-height:16px;
       border-radius:999px;
       background:rgba(0,0,0,0.44);
       border:1px solid rgba(255,255,255,0.10);
@@ -308,6 +308,7 @@
       line-height:1;
       height:16px;
       display:block;
+      transform:translateY(-0.5px);
     }
 
     .rank-input::-webkit-outer-spin-button,
@@ -319,6 +320,7 @@
     .rank-input::placeholder{color:rgba(255,255,255,0.20)}
 
     .rank-text{
+      width:32px;
       color:#ffdf7b;
       font-size:14px;
       font-weight:900;
@@ -326,7 +328,6 @@
       height:16px;
       display:block;
       transform:translateY(-0.5px);
-      min-width:16px;
       text-align:left;
     }
 
@@ -541,14 +542,12 @@
       background:#0B1020 !important;
     }
 
-    body.export-mode .side-menu{
-      display:none !important;
-    }
-
-    body.export-mode .rank-badge{
-      backdrop-filter:none !important;
-      -webkit-backdrop-filter:none !important;
-    }
+    body.export-mode .side-menu{display:none !important}
+    body.export-mode .grid-wrapper{transform:none !important}
+    body.export-mode .app-bg img{filter:none !important; transform:none !important}
+    body.export-mode .cover-blur{display:none !important}
+    body.export-mode .logo-img{filter:none !important}
+    body.export-mode .rank-badge{backdrop-filter:none !important; -webkit-backdrop-filter:none !important}
 
     @media (max-width: 1500px){
       .grid{grid-template-columns:repeat(6, minmax(0, 1fr))}
@@ -565,6 +564,7 @@
       .grid{grid-template-columns:repeat(2, minmax(0, 1fr))}
       .logo-img{max-height:68%}
       .rank-input{width:30px}
+      .rank-text{width:30px}
     }
   </style>
 </head>
@@ -616,7 +616,8 @@
 
   <div id="app" class="app">
     <div class="app-bg">
-      <img id="bg-img" crossorigin="anonymous" src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3375780/page_bg_raw.jpg?t=1766080552" alt="" />
+      <img id="bg-img" crossorigin="anonymous" referrerpolicy="no-referrer" loading="eager"
+        src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3375780/page_bg_raw.jpg?t=1766080552" alt="" />
     </div>
 
     <div class="content">
@@ -921,8 +922,8 @@
 
         <div class="view-normal">
           <div class="cover">
-            <img class="cover-blur" crossorigin="anonymous" src="${safeCover}" alt="" />
-            <img class="cover-img" crossorigin="anonymous" src="${safeCover}" alt="${safeName} cover" />
+            <img class="cover-blur" crossorigin="anonymous" referrerpolicy="no-referrer" loading="eager" src="${safeCover}" alt="" />
+            <img class="cover-img" crossorigin="anonymous" referrerpolicy="no-referrer" loading="eager" src="${safeCover}" alt="${safeName} cover" />
             <div class="no-cover">NO COVER</div>
           </div>
         </div>
@@ -930,7 +931,7 @@
         <div class="view-spoiler">
           <div class="spoiler-surface"></div>
           <div class="spoiler-inner">
-            <img class="logo-img" crossorigin="anonymous" src="${safeLogo}" alt="${safeName} logo" />
+            <img class="logo-img" crossorigin="anonymous" referrerpolicy="no-referrer" loading="eager" src="${safeLogo}" alt="${safeName} logo" />
           </div>
         </div>
       `;
@@ -1070,16 +1071,15 @@
     }
 
     async function exportPNG(){
-      if(!window.html2canvas) return;
+      const root = document.getElementById("app");
 
-      try{ sideMenu.classList.remove("open"); }catch(e){}
-      document.body.classList.add("export-mode");
+      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(e){}
+      await waitForImages(root);
 
-      try {
-        try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(e){}
-        await waitForImages(app);
+      try{
+        document.body.classList.add("export-mode");
 
-        const canvas = await html2canvas(app, {
+        const canvas = await html2canvas(root, {
           backgroundColor: "#0B1020",
           useCORS: true,
           allowTaint: false,
@@ -1091,6 +1091,16 @@
             doc.querySelectorAll('[data-ignore-export="true"]').forEach(n => n.remove());
             doc.querySelectorAll("img").forEach(img => img.setAttribute("crossorigin","anonymous"));
 
+            doc.querySelectorAll("*").forEach(el=>{
+              el.style.filter = "none";
+              el.style.backdropFilter = "none";
+              el.style.webkitBackdropFilter = "none";
+            });
+
+            doc.querySelectorAll(".grid-wrapper").forEach(el=>{ el.style.transform="none"; });
+            doc.querySelectorAll(".app-bg img").forEach(el=>{ el.style.filter="none"; el.style.transform="none"; });
+            doc.querySelectorAll(".cover-blur").forEach(el=>{ el.style.display="none"; });
+
             doc.querySelectorAll(".rank-badge").forEach(badge=>{
               const input = badge.querySelector(".rank-input");
               if(!input) return;
@@ -1101,13 +1111,6 @@
               input.style.display = "none";
               badge.appendChild(span);
             });
-
-            doc.querySelectorAll("*").forEach(el=>{
-              const r = el.getBoundingClientRect();
-              if(r.width===0 || r.height===0){
-                el.style.backgroundImage = "none";
-              }
-            });
           }
         });
 
@@ -1115,16 +1118,15 @@
         a.download = "TopTrails.png";
         a.href = canvas.toDataURL("image/png");
         a.click();
-      } catch(err) {
+      }catch(err){
         console.error("Export failed:", err);
         alert("Export échoué. Ouvre la console pour le détail (F12).");
-      } finally {
+      }finally{
         document.body.classList.remove("export-mode");
       }
     }
 
     btnExport.addEventListener("click", exportPNG);
-
     applyLanguage();
   </script>
 </body>
