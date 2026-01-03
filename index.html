@@ -1,654 +1,881 @@
-<!doctype html>
-<html lang="fr">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Top Trails</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
-    :root{
-      --bg0:#070A12;
-      --bg1:#0B1020;
-      --panel:#0F172A;
-      --card:#0B1224;
-      --text:#E6EAF2;
-      --muted:#9AA4B2;
-      --gold:#D6B15A;
-      --line:rgba(255,255,255,.08);
-      --shadow: 0 18px 60px rgba(0,0,0,.55);
-      --radius:18px;
+    * { box-sizing: border-box; }
 
-      --cardW: 170px;
-      --cardH: 240px;
-      --bannerH: 68px;
+    body {
+      margin: 0;
+      padding: 16px 24px 24px;
+      background: radial-gradient(circle at top, #1a2550 0, #0b1027 56%, #07081a 100%);
+      color: #f5f7ff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    *{ box-sizing:border-box; }
-    body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      color:var(--text);
-      background:
-        radial-gradient(1100px 700px at 30% -10%, rgba(70,90,200,.25), transparent 60%),
-        radial-gradient(900px 600px at 70% 10%, rgba(20,190,170,.12), transparent 55%),
-        linear-gradient(180deg, var(--bg0), var(--bg1));
-      min-height:100vh;
+    body.export-mode {
+      background: #0b1126 !important;
     }
-
-    /* IMPORTANT: export-mode neutralise TOUT ce qui peut générer des patterns (gradients, filtres, etc.) */
-    body.export-mode,
-    body.export-mode *{
+    body.export-mode * {
       background-image: none !important;
-      filter:none !important;
-      backdrop-filter:none !important;
-      text-shadow:none !important;
-      box-shadow:none !important;
-      transition:none !important;
-      animation:none !important;
     }
-    body.export-mode{
-      background: var(--bg1) !important;
+    body.export-mode .config-screen {
+      background: #0b1126 !important;
     }
-
-    /* Overlay config */
-    #configOverlay{
-      position:fixed; inset:0;
-      display:flex; align-items:center; justify-content:center;
-      background: rgba(0,0,0,.55);
-      z-index: 50;
+    body.export-mode .subtle-divider {
+      background: rgba(255,255,255,0.14) !important;
     }
-    .configCard{
-      width:min(520px, 92vw);
-      background: rgba(15,23,42,.92);
-      border:1px solid var(--line);
-      border-radius: 22px;
-      padding: 18px 18px 16px;
-      box-shadow: var(--shadow);
+    body.export-mode .overlay {
+      background: rgba(0,0,0,0.72) !important;
     }
-    .configTitle{
-      font-size: 18px;
-      font-weight: 750;
-      margin: 2px 0 14px;
-      letter-spacing:.2px;
+    body.export-mode .btn,
+    body.export-mode .btn-small {
+      background: #ffd369 !important;
     }
-    .row{
-      display:flex; align-items:center; justify-content:space-between;
-      gap:12px;
-      padding: 10px 10px;
-      border-radius: 14px;
-      border:1px solid rgba(255,255,255,.06);
-      background: rgba(11,18,36,.55);
-      margin-bottom: 10px;
-    }
-    .row label{
-      font-size: 13px;
-      color: var(--muted);
-    }
-    select, button, input[type="checkbox"]{
-      font: inherit;
-    }
-    select{
-      background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.10);
-      color: var(--text);
-      padding: 6px 10px;
-      border-radius: 10px;
-      outline:none;
-    }
-    .toggle{
-      display:flex; align-items:center; gap:10px;
-      color: var(--text);
-      font-size: 13px;
-      user-select:none;
-    }
-    .toggle input{ transform: scale(1.05); }
-    .okBtn{
-      width:100%;
-      border:0;
-      background: rgba(214,177,90,.95);
-      color:#1b1b1b;
-      font-weight: 800;
-      padding: 10px 12px;
-      border-radius: 14px;
-      cursor:pointer;
+    body.export-mode .no-cover {
+      background: rgba(255,255,255,0.06) !important;
     }
 
-    /* Side menu */
-    #menuBtn{
-      position:fixed;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 40px; height: 40px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(15,23,42,.75);
-      color: var(--text);
-      cursor:pointer;
-      z-index: 30;
-      box-shadow: 0 10px 35px rgba(0,0,0,.35);
-    }
-    #sidePanel{
-      position:fixed;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 240px;
-      background: rgba(15,23,42,.92);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius: 16px;
-      padding: 12px;
-      z-index: 31;
-      box-shadow: var(--shadow);
-      display:none;
-    }
-    #sidePanel.open{ display:block; }
-    .panelTitle{
-      font-weight: 800;
-      margin: 4px 2px 10px;
-      letter-spacing:.2px;
-    }
-    .panelBtn{
-      width:100%;
-      border:0;
-      background: rgba(214,177,90,.95);
-      color:#1b1b1b;
-      font-weight: 850;
-      padding: 10px 12px;
-      border-radius: 12px;
-      cursor:pointer;
-      margin-top: 10px;
+    .config-screen {
+      width: 100%;
+      max-width: 480px;
+      padding: 24px 24px 20px;
+      border-radius: 18px;
+      background: radial-gradient(circle at top left, #2b3362, #070a1f);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
-    /* App container */
-    #app{
-      width: min(1400px, calc(100vw - 40px));
-      margin: 0 auto;
-      padding: 28px 8px 40px;
+    .config-title {
+      font-size: 20px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 4px;
     }
-    .title{
-      text-align:center;
-      font-size: 24px;
-      font-weight: 900;
-      letter-spacing:.5px;
-      margin: 6px 0 20px;
-    }
-    .divider{
-      height:1px;
-      background: rgba(255,255,255,.08);
-      margin: 18px 0 14px;
-    }
-    .sectionLabel{
-      font-size: 11px;
-      letter-spacing: .16em;
+
+    .config-section-title {
+      font-size: 12px;
       text-transform: uppercase;
-      color: rgba(255,255,255,.55);
-      margin: 0 0 10px;
+      letter-spacing: 0.12em;
+      opacity: 0.85;
+      margin-bottom: 4px;
     }
 
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(auto-fill, minmax(var(--cardW), 1fr));
-      gap: 14px;
-      align-items:start;
-      justify-items:start;
+    .config-lang-group {
+      display: flex;
+      gap: 10px;
     }
 
-    /* Cards */
-    .card{
-      width: var(--cardW);
-      height: var(--cardH);
-      border-radius: var(--radius);
-      overflow:hidden;
-      border: 1px solid rgba(255,255,255,.08);
-      background: rgba(11,18,36,.55);
-      box-shadow: 0 18px 55px rgba(0,0,0,.40);
-      display:flex;
-      flex-direction: column;
-    }
-    .card.ranked{
-      border: 1.5px solid rgba(214,177,90,.95);
-      box-shadow: 0 22px 65px rgba(214,177,90,.10), 0 18px 55px rgba(0,0,0,.45);
-    }
-
-    .banner{
-      height: var(--bannerH);
-      padding: 10px 10px 8px;
-      display:flex;
-      flex-direction: column;
+    .config-lang-group label {
+      display: inline-flex;
+      align-items: center;
       gap: 6px;
-      background: rgba(7,10,18,.35);
-      border-bottom: 1px solid rgba(255,255,255,.06);
-    }
-    .rankRow{
-      display:flex;
-      align-items:center;
-      gap: 6px;
-      font-weight: 850;
-      color: rgba(255,255,255,.9);
-    }
-    .hash{ opacity:.85; }
-    .rankInput{
-      width: 36px;
-      padding: 2px 6px;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
-      color: var(--text);
-      font-weight: 900;
-      outline:none;
-      text-align:center;
-    }
-    .gameTitle{
-      font-weight: 850;
-      font-size: 13.5px;            /* TITRE plus lisible */
-      line-height: 1.15;
-      display:-webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow:hidden;
-      text-shadow: 0 1px 0 rgba(0,0,0,.35);
+      font-size: 13px;
+      cursor: pointer;
     }
 
-    .cover{
-      flex:1;
-      background: rgba(0,0,0,.22);
-    }
-    .cover img{
-      width:100%;
-      height:100%;
-      object-fit: cover;
-      display:block;
+    .config-lang-group input {
+      accent-color: #ffd369;
     }
 
-    /* Anti-spoiler: plus d’espace vide, bandeau étiré, titre centré et plus gros */
-    body.spoiler .cover{ display:none; }
-    body.spoiler .banner{
-      height: 100%;
-      border-bottom: 0;
-      padding: 12px;
+    .config-toggle {
+      display: flex;
+      align-items: center;
       justify-content: space-between;
-    }
-    body.spoiler .rankRow{ justify-content:flex-start; }
-    body.spoiler .gameTitle{
-      margin-top: 8px;
-      text-align:center;
-      font-size: 16.5px;
-      -webkit-line-clamp: 4;
-      line-height: 1.18;
+      gap: 10px;
+      font-size: 13px;
     }
 
-    /* Small responsiveness */
-    @media (max-width: 520px){
-      :root{ --cardW: 155px; --cardH: 225px; --bannerH: 66px; }
-      .title{ font-size: 22px; }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #343950;
+      transition: .2s;
+      border-radius: 999px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #f5f7ff;
+      transition: .2s;
+      border-radius: 50%;
+    }
+
+    .switch input:checked + .slider {
+      background-color: #ffd369;
+    }
+
+    .switch input:checked + .slider:before {
+      transform: translateX(18px);
+    }
+
+    .config-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 4px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 6px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ffd369, #ffb347);
+      color: #141414;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.55);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.55);
+    }
+
+    .app {
+      display: none;
+      width: 100%;
+      max-width: 1600px;
+      height: 100vh;
+      padding: 16px 24px 24px;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .app.visible {
+      display: flex;
+    }
+
+    .grid-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 12px;
+    }
+
+    .subtle-divider {
+      height: 1px;
+      width: 100%;
+      background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(255, 255, 255, 0.14) 25%,
+        rgba(255, 255, 255, 0.14) 75%,
+        transparent 100%
+      );
+      opacity: 0.85;
+    }
+
+    .not-played-label {
+      font-size: 11px;
+      opacity: 0.8;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      margin-left: 4px;
+    }
+
+    .card {
+      position: relative;
+      border-radius: 18px;
+      overflow: hidden;
+      background: rgba(7, 10, 28, 0.92);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: transform 0.12s ease-out, box-shadow 0.12s ease-out, border-color 0.12s ease-out;
+    }
+
+    .card.ranked {
+      border-color: #ffc857;
+      box-shadow: 0 0 0 1px rgba(255, 200, 87, 0.45), 0 12px 26px rgba(0, 0, 0, 0.82);
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.86);
+    }
+
+    .cover {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      overflow: hidden;
+      background: rgba(5, 8, 22, 0.9);
+    }
+
+    .cover img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+      background: rgba(5, 8, 22, 0.9);
+    }
+
+    .overlay {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      padding: 7px 8px 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.82) 0%,
+        rgba(0, 0, 0, 0.62) 55%,
+        transparent 100%
+      );
+      z-index: 2;
+    }
+
+    .rank-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.72);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+      flex-shrink: 0;
+    }
+
+    .rank-chip .hash {
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffd369;
+    }
+
+    .rank-input {
+      width: 28px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.25);
+      color: #ffdf7b;
+      font-size: 15px;
+      font-weight: 800;
+      padding: 0 0 1px;
+      text-align: center;
+      outline: none;
+      -moz-appearance: textfield;
+    }
+
+    .rank-input::-webkit-outer-spin-button,
+    .rank-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .rank-input::placeholder {
+      color: rgba(255, 255, 255, 0.25);
+    }
+
+    .rank-input:focus {
+      border-bottom-color: #ffd86b;
+    }
+
+    .title {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 750;
+      color: #ffffff;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+      line-height: 1.18;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    .no-cover,
+    .spoiler-mask {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: rgba(230, 233, 255, 0.85);
+      text-align: center;
+      padding: 0 8px;
+      z-index: 1;
+    }
+
+    .no-cover {
+      background: repeating-linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, 0.06),
+        rgba(255, 255, 255, 0.06) 6px,
+        rgba(0, 0, 0, 0.42) 6px,
+        rgba(0, 0, 0, 0.42) 12px
+      );
+    }
+
+    .spoiler-mask {
+      background: rgba(5, 6, 14, 0.88);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .side-menu {
+      position: fixed;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 50;
+      font-size: 11px;
+      display: none;
+    }
+
+    .side-handle {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: #ffd369;
+      border: 1px solid #ffe9a5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.85);
+      user-select: none;
+      color: #2b2130;
+      font-weight: 900;
+      font-size: 16px;
+    }
+
+    .side-panel {
+      margin-top: 6px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(4, 7, 22, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      min-width: 185px;
+      display: none;
+    }
+
+    .side-menu.open .side-panel {
+      display: block;
+    }
+
+    .side-caption {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      opacity: 0.85;
+      margin-bottom: 6px;
+    }
+
+    .lang-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+
+    .lang-select {
+      background: #050816;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #f5f7ff;
+      padding: 2px 8px;
+      font-size: 11px;
+      outline: none;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 4px 0 8px;
+      font-size: 12px;
+    }
+
+    .btn-small {
+      margin-top: 4px;
+      border: none;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ffd369, #ffb347);
+      color: #141414;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.65);
+      width: 100%;
+    }
+
+    body.spoiler-on .cover img {
+      display: none;
+    }
+
+    body.spoiler-on .spoiler-mask {
+      display: none;
+    }
+
+    body.spoiler-on .overlay {
+      top: 0;
+      bottom: 0;
+      padding: 12px 10px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      align-items: start;
+      justify-items: center;
+      background: radial-gradient(circle at top, rgba(16, 22, 55, 0.92), rgba(5, 7, 18, 0.92));
+      text-align: center;
+      gap: 10px;
+    }
+
+    body.spoiler-on .rank-chip {
+      justify-self: start;
+    }
+
+    body.spoiler-on .title {
+      align-self: center;
+      font-size: 15px;
+      text-align: center;
+      padding: 0 6px;
+      line-height: 1.2;
+    }
+
+    @media (max-width: 1500px) {
+      .grid { grid-template-columns: repeat(6, 1fr); }
+    }
+    @media (max-width: 1280px) {
+      body { overflow-y: auto; }
+      .grid { grid-template-columns: repeat(4, 1fr); }
     }
   </style>
 </head>
-
 <body>
 
-  <!-- Config overlay -->
-  <div id="configOverlay" data-ignore-export="true">
-    <div class="configCard">
-      <div class="configTitle">Configuration</div>
+  <div id="config-screen" class="config-screen">
+    <div class="config-title" data-i18n="configTitle">Configure your view</div>
 
-      <div class="row">
-        <label for="langSelectCfg">Langue</label>
-        <select id="langSelectCfg">
-          <option value="EN">EN</option>
-          <option value="FR">FR</option>
+    <div>
+      <div class="config-section-title" data-i18n="langTitle">Language</div>
+      <div class="config-lang-group">
+        <label>
+          <input type="radio" name="lang" value="en" checked />
+          <span>English</span>
+        </label>
+        <label>
+          <input type="radio" name="lang" value="fr" />
+          <span>Français</span>
+        </label>
+      </div>
+    </div>
+
+    <div>
+      <div class="config-section-title" data-i18n="spoilerTitle">Anti-spoiler</div>
+      <div class="config-toggle">
+        <span data-i18n="spoilerDesc">Hide covers (anti-spoiler)</span>
+        <label class="switch">
+          <input type="checkbox" id="cfg-spoiler">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="config-actions">
+      <button id="cfg-ok" class="btn" data-i18n="ok">OK</button>
+    </div>
+  </div>
+
+  <div id="app" class="app">
+    <div class="grid-wrapper">
+      <div id="grid-ranked" class="grid"></div>
+
+      <div class="subtle-divider"></div>
+      <div id="not-played-label" class="not-played-label">UNRANKED :</div>
+      <div id="grid-unranked" class="grid"></div>
+    </div>
+  </div>
+
+  <div id="side-menu" class="side-menu">
+    <div id="side-handle" class="side-handle">☰</div>
+    <div class="side-panel">
+      <div class="side-caption" data-i18n="sideOptions">OPTIONS</div>
+
+      <div class="lang-row">
+        <span data-i18n="sideLang">Language</span>
+        <select id="side-lang" class="lang-select">
+          <option value="en">EN</option>
+          <option value="fr">FR</option>
         </select>
       </div>
 
-      <div class="row">
-        <label>Anti-spoiler</label>
-        <div class="toggle">
-          <input id="spoilerToggleCfg" type="checkbox" />
-          <span id="spoilerLabelCfg">OFF</span>
-        </div>
+      <div class="toggle-row">
+        <span data-i18n="sideSpoiler">Anti-spoiler</span>
+        <label class="switch" style="transform:scale(0.8);transform-origin:right center;">
+          <input type="checkbox" id="side-spoiler">
+          <span class="slider"></span>
+        </label>
       </div>
-
-      <button class="okBtn" id="okBtn">OK</button>
+      <button id="btn-export" class="btn-small" data-i18n="exportImage">Export PNG</button>
     </div>
   </div>
-
-  <!-- Side menu button -->
-  <button id="menuBtn" aria-label="Menu" data-ignore-export="true">☰</button>
-
-  <!-- Side panel -->
-  <div id="sidePanel" data-ignore-export="true">
-    <div class="panelTitle">Options</div>
-
-    <div class="row" style="margin-bottom:10px;">
-      <label for="langSelectPanel">Language</label>
-      <select id="langSelectPanel">
-        <option value="EN">EN</option>
-        <option value="FR">FR</option>
-      </select>
-    </div>
-
-    <div class="row" style="margin-bottom:10px;">
-      <label>Anti-spoiler</label>
-      <div class="toggle">
-        <input id="spoilerTogglePanel" type="checkbox" />
-        <span id="spoilerLabelPanel">OFF</span>
-      </div>
-    </div>
-
-    <button class="panelBtn" id="exportBtn">Export PNG</button>
-  </div>
-
-  <!-- App -->
-  <div id="app">
-    <div class="title">Top Trails</div>
-
-    <div id="rankedGrid" class="grid"></div>
-
-    <div class="divider"></div>
-    <div id="unrankedLabel" class="sectionLabel">UNRANKED:</div>
-    <div id="unrankedGrid" class="grid"></div>
-  </div>
-
-  <!-- html2canvas -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <script>
-    const i18n = {
-      EN: { unranked: "UNRANKED:" },
-      FR: { unranked: "NON CLASSÉ(S) :" }
-    };
-
-    // Remplace/ajuste tes URLs si besoin (Wikimedia recommande souvent CORS OK).
-    const games = [
-      { id:"sky1",   title:"Trails in the Sky 1st Chapter", cover:"https://upload.wikimedia.org/wikipedia/en/thumb/1/1c/Trails_in_the_Sky_artwork.jpg/250px-Trails_in_the_Sky_artwork.jpg" },
-      { id:"skySC",  title:"Trails in the Sky SC",          cover:"https://upload.wikimedia.org/wikipedia/en/thumb/1/17/Trails_in_the_Sky_SC_artwork.jpg/250px-Trails_in_the_Sky_SC_artwork.jpg" }, // si 404, remplace par ton URL actuel
-      { id:"skyFC",  title:"Trails in the Sky FC",          cover:"https://upload.wikimedia.org/wikipedia/en/thumb/1/1c/Trails_in_the_Sky_artwork.jpg/250px-Trails_in_the_Sky_artwork.jpg" },
-      { id:"sky3",   title:"Trails in the Sky the 3rd",     cover:"https://upload.wikimedia.org/wikipedia/en/thumb/3/3e/Trails_in_the_Sky_the_3rd_artwork.jpg/250px-Trails_in_the_Sky_the_3rd_artwork.jpg" }, // si 404, remplace par ton URL actuel
-
-      { id:"zero",   title:"Trails from Zero",              cover:"https://upload.wikimedia.org/wikipedia/en/thumb/2/2a/Trails_from_Zero_Steam_artwork.jpg/250px-Trails_from_Zero_Steam_artwork.jpg" }, // si 404, remplace
-      { id:"azure",  title:"Trails to Azure",               cover:"https://upload.wikimedia.org/wikipedia/en/thumb/a/a9/Trails_to_Azure_Steam_artwork.jpg/250px-Trails_to_Azure_Steam_artwork.jpg" },
-
-      { id:"cs1",    title:"Trails of Cold Steel",          cover:"https://upload.wikimedia.org/wikipedia/en/thumb/a/a7/Trails_of_Cold_Steel_Steam_artwork.jpg/250px-Trails_of_Cold_Steel_Steam_artwork.jpg" },
-      { id:"cs2",    title:"Trails of Cold Steel 2",        cover:"https://upload.wikimedia.org/wikipedia/en/thumb/8/81/Trails_of_Cold_Steel_II_Steam_artwork.jpg/250px-Trails_of_Cold_Steel_II_Steam_artwork.jpg" },
-      { id:"cs3",    title:"Trails of Cold Steel 3",        cover:"https://upload.wikimedia.org/wikipedia/en/thumb/1/15/Trails_of_Cold_Steel_III_Steam_artwork.jpg/250px-Trails_of_Cold_Steel_III_Steam_artwork.jpg" },
-      { id:"cs4",    title:"Trails of Cold Steel 4",        cover:"https://upload.wikimedia.org/wikipedia/en/c/cd/Trails_of_Cold_Steel_IV_Cover_Art.png" },
-
-      { id:"reverie",title:"Trails into Reverie",           cover:"https://upload.wikimedia.org/wikipedia/en/1/13/Trails_into_Reverie_Cover_Art.jpg" },
-      { id:"day1",   title:"Trails through Daybreak",       cover:"https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Trails_through_Daybreak_artwork.jpg/250px-Trails_through_Daybreak_artwork.jpg" },
-      { id:"day2",   title:"Trails through Daybreak 2",     cover:"https://upload.wikimedia.org/wikipedia/en/thumb/0/07/Trails_through_Daybreak_II_artwork.jpg/250px-Trails_through_Daybreak_II_artwork.jpg" },
-      { id:"horizon",title:"Trails beyond the Horizon",     cover:"https://upload.wikimedia.org/wikipedia/en/thumb/4/4a/Trails_Beyond_the_Horizon_artwork.jpg/250px-Trails_Beyond_the_Horizon_artwork.jpg" }
-    ];
-
-    const STORAGE_KEY = "toptrails_state_v2";
-
-    const defaultState = {
-      lang: "EN",
-      spoiler: false,
-      ranks: {
-        sky1: 1,
-        skySC: 2
+    const texts = {
+      en: {
+        configTitle: "Configure your view",
+        langTitle: "Language",
+        spoilerTitle: "Anti-spoiler",
+        spoilerDesc: "Hide covers (anti-spoiler)",
+        ok: "OK",
+        notPlayed: "UNRANKED :",
+        spoilerMask: "SPOILER",
+        sideOptions: "OPTIONS",
+        sideLang: "Language",
+        sideSpoiler: "Anti-spoiler",
+        exportImage: "Export PNG"
+      },
+      fr: {
+        configTitle: "Configurer l'affichage",
+        langTitle: "Langue",
+        spoilerTitle: "Anti-spoiler",
+        spoilerDesc: "Masquer les jaquettes (anti-spoiler)",
+        ok: "OK",
+        notPlayed: "NON CLASSÉ(S) :",
+        spoilerMask: "SPOILER",
+        sideOptions: "OPTIONS",
+        sideLang: "Langue",
+        sideSpoiler: "Anti-spoiler",
+        exportImage: "Exporter en PNG"
       }
     };
 
-    const state = loadState();
+    const games = [
+      {
+        id: "sky-1st",
+        name: "Trails in the Sky 1st Chapter",
+        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/1/1c/Trails_in_the_Sky_artwork.jpg/250px-Trails_in_the_Sky_artwork.jpg",
+        rank: 1
+      },
+      {
+        id: "sky-sc",
+        name: "Trails in the Sky SC",
+        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/0/08/Trails_in_the_Sky_SC_artwork.jpg/250px-Trails_in_the_Sky_SC_artwork.jpg",
+        rank: 2
+      },
+      {
+        id: "sky-fc",
+        name: "Trails in the Sky FC",
+        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/1/1c/Trails_in_the_Sky_artwork.jpg/250px-Trails_in_the_Sky_artwork.jpg"
+      },
+      {
+        id: "sky-3rd",
+        name: "Trails in the Sky the 3rd",
+        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/f/f6/Trails_in_the_Sky_the_3rd_artwork.jpg/250px-Trails_in_the_Sky_the_3rd_artwork.jpg"
+      },
+      {
+        id: "zero",
+        name: "Trails from Zero",
+        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/c/c7/Trails_from_Zero.jpg/250px-Trails_from_Zero.jpg"
+      },
+      {
+        id: "azure",
+        name: "Trails to Azure",
+        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/a/a9/Trails_to_Azure_Steam_artwork.jpg/250px-Trails_to_Azure_Steam_artwork.jpg"
+      },
+      {
+        id: "cs1",
+        name: "Trails of Cold Steel",
+        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/a/a7/Trails_of_Cold_Steel_Steam_artwork.jpg/250px-Trails_of_Cold_Steel_Steam_artwork.jpg"
+      },
+      {
+        id: "cs2",
+        name: "Trails of Cold Steel 2",
+        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/8/81/Trails_of_Cold_Steel_II_Steam_artwork.jpg/250px-Trails_of_Cold_Steel_II_Steam_artwork.jpg"
+      },
+      {
+        id: "cs3",
+        name: "Trails of Cold Steel 3",
+        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/1/15/Trails_of_Cold_Steel_III_Steam_artwork.jpg/250px-Trails_of_Cold_Steel_III_Steam_artwork.jpg"
+      },
+      {
+        id: "cs4",
+        name: "Trails of Cold Steel 4",
+        cover: "https://upload.wikimedia.org/wikipedia/en/c/cd/Trails_of_Cold_Steel_IV_Cover_Art.png"
+      },
+      {
+        id: "reverie",
+        name: "Trails into Reverie",
+        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/1/13/Trails_into_Reverie_Cover_Art.jpg/250px-Trails_into_Reverie_Cover_Art.jpg"
+      },
+      {
+        id: "daybreak",
+        name: "Trails through Daybreak",
+        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Trails_through_Daybreak_artwork.jpg/250px-Trails_through_Daybreak_artwork.jpg"
+      },
+      {
+        id: "daybreak2",
+        name: "Trails through Daybreak 2",
+        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/0/07/Trails_through_Daybreak_II_artwork.jpg/250px-Trails_through_Daybreak_II_artwork.jpg"
+      },
+      {
+        id: "beyond",
+        name: "Trails beyond the Horizon",
+        cover: "https://upload.wikimedia.org/wikipedia/en/thumb/4/4a/Trails_Beyond_the_Horizon_artwork.jpg/250px-Trails_Beyond_the_Horizon_artwork.jpg"
+      }
+    ];
 
-    // DOM refs
-    const configOverlay = document.getElementById("configOverlay");
-    const okBtn = document.getElementById("okBtn");
+    const rankedGrid = document.getElementById("grid-ranked");
+    const unrankedGrid = document.getElementById("grid-unranked");
 
-    const langSelectCfg = document.getElementById("langSelectCfg");
-    const spoilerToggleCfg = document.getElementById("spoilerToggleCfg");
-    const spoilerLabelCfg = document.getElementById("spoilerLabelCfg");
+    let currentLang = "en";
+    let spoilerOn = false;
 
-    const menuBtn = document.getElementById("menuBtn");
-    const sidePanel = document.getElementById("sidePanel");
+    function applyLanguage() {
+      const t = texts[currentLang];
+      document.documentElement.lang = currentLang;
+      document.getElementById("not-played-label").textContent = t.notPlayed;
 
-    const langSelectPanel = document.getElementById("langSelectPanel");
-    const spoilerTogglePanel = document.getElementById("spoilerTogglePanel");
-    const spoilerLabelPanel = document.getElementById("spoilerLabelPanel");
-    const exportBtn = document.getElementById("exportBtn");
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (t[key]) el.textContent = t[key];
+      });
 
-    const rankedGrid = document.getElementById("rankedGrid");
-    const unrankedGrid = document.getElementById("unrankedGrid");
-    const unrankedLabel = document.getElementById("unrankedLabel");
+      document.querySelectorAll(".spoiler-mask").forEach(el => {
+        el.textContent = t.spoilerMask;
+      });
+    }
 
-    // Build cards once
-    const cardById = new Map();
-    games.forEach(g => {
-      const el = buildCard(g);
-      cardById.set(g.id, el);
-    });
+    function updateSpoilerState() {
+      document.body.classList.toggle("spoiler-on", spoilerOn);
+      document.getElementById("side-spoiler").checked = spoilerOn;
+      document.getElementById("cfg-spoiler").checked = spoilerOn;
+    }
 
-    // Init UI
-    syncAllControls();
-    applyLang();
-    applySpoiler();
-    placeCards();
-
-    // Show config overlay at start
-    configOverlay.style.display = "flex";
-
-    // Events
-    okBtn.addEventListener("click", () => {
-      configOverlay.style.display = "none";
-    });
-
-    menuBtn.addEventListener("click", () => {
-      sidePanel.classList.toggle("open");
-    });
-
-    langSelectCfg.addEventListener("change", (e) => {
-      state.lang = e.target.value;
-      persist();
-      syncAllControls();
-      applyLang();
-    });
-
-    langSelectPanel.addEventListener("change", (e) => {
-      state.lang = e.target.value;
-      persist();
-      syncAllControls();
-      applyLang();
-    });
-
-    spoilerToggleCfg.addEventListener("change", (e) => {
-      state.spoiler = !!e.target.checked;
-      persist();
-      syncAllControls();
-      applySpoiler();
-    });
-
-    spoilerTogglePanel.addEventListener("change", (e) => {
-      state.spoiler = !!e.target.checked;
-      persist();
-      syncAllControls();
-      applySpoiler();
-    });
-
-    exportBtn.addEventListener("click", exportPNG);
-
-    function buildCard(game){
+    function createCard(game, index) {
       const card = document.createElement("div");
       card.className = "card";
       card.dataset.id = game.id;
+      card.dataset.index = index;
 
-      const banner = document.createElement("div");
-      banner.className = "banner";
+      if (game.rank) {
+        card.dataset.rank = game.rank;
+        card.classList.add("ranked");
+      } else {
+        card.dataset.rank = "";
+      }
 
-      const rankRow = document.createElement("div");
-      rankRow.className = "rankRow";
+      card.innerHTML = `
+        <div class="cover">
+          <img src="${game.cover}" alt="${game.name} cover" />
+          <div class="overlay">
+            <div class="rank-chip">
+              <span class="hash">#</span>
+              <input class="rank-input" type="text" inputmode="numeric" maxlength="2" />
+            </div>
+            <div class="title">${game.name}</div>
+          </div>
+          <div class="no-cover">NO COVER</div>
+          <div class="spoiler-mask"></div>
+        </div>
+      `;
 
-      const hash = document.createElement("span");
-      hash.className = "hash";
-      hash.textContent = "#";
+      const input = card.querySelector(".rank-input");
+      if (game.rank) input.value = game.rank;
 
-      const rankInput = document.createElement("input");
-      rankInput.className = "rankInput";
-      rankInput.maxLength = 2;
-      rankInput.inputMode = "numeric";
-      rankInput.placeholder = "";
-      rankInput.value = state.ranks[game.id] ? String(state.ranks[game.id]) : "";
-
-      rankInput.addEventListener("input", () => {
-        // digits only, 2 chars max
-        let v = rankInput.value.replace(/\D/g,"").slice(0,2);
-        rankInput.value = v;
-
-        if (!v || Number(v) === 0){
-          delete state.ranks[game.id];
-        } else {
-          state.ranks[game.id] = Number(v);
-        }
-        persist();
-        placeCards();
+      input.addEventListener("input", () => handleRankChange(card, input));
+      input.addEventListener("blur", () => handleRankChange(card, input));
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") input.blur();
       });
 
-      rankRow.appendChild(hash);
-      rankRow.appendChild(rankInput);
-
-      const title = document.createElement("div");
-      title.className = "gameTitle";
-      title.textContent = game.title;
-
-      banner.appendChild(rankRow);
-      banner.appendChild(title);
-
-      const cover = document.createElement("div");
-      cover.className = "cover";
-
-      const img = document.createElement("img");
-      img.src = game.cover;
-      img.alt = game.title;
-      img.loading = "eager";
-      img.crossOrigin = "anonymous"; // important for canvas export
+      const img = card.querySelector("img");
+      const noCover = card.querySelector(".no-cover");
       img.addEventListener("error", () => {
-        // fallback simple: remove image but keep block (avoid 0-height surprises)
-        img.remove();
-        cover.style.background = "rgba(0,0,0,.28)";
+        img.style.display = "none";
+        noCover.style.display = "flex";
       });
-
-      cover.appendChild(img);
-
-      card.appendChild(banner);
-      card.appendChild(cover);
 
       return card;
     }
 
-    function placeCards(){
-      rankedGrid.innerHTML = "";
-      unrankedGrid.innerHTML = "";
-
-      const ranked = [];
-      const unranked = [];
-
-      for (const g of games){
-        const r = state.ranks[g.id];
-        if (Number.isFinite(r)) ranked.push({ g, r });
-        else unranked.push(g);
-      }
-
-      ranked.sort((a,b) => a.r - b.r || a.g.title.localeCompare(b.g.title));
-      unranked.sort((a,b) => a.title.localeCompare(b.title));
-
-      ranked.forEach(({g}) => {
-        const card = cardById.get(g.id);
-        card.classList.add("ranked");
-        rankedGrid.appendChild(card);
-      });
-
-      unranked.forEach(g => {
-        const card = cardById.get(g.id);
+    function handleRankChange(card, input) {
+      let value = input.value.trim();
+      if (value === "") {
+        card.dataset.rank = "";
         card.classList.remove("ranked");
-        unrankedGrid.appendChild(card);
-      });
-    }
-
-    function applyLang(){
-      unrankedLabel.textContent = i18n[state.lang].unranked;
-    }
-
-    function applySpoiler(){
-      document.body.classList.toggle("spoiler", !!state.spoiler);
-    }
-
-    function syncAllControls(){
-      langSelectCfg.value = state.lang;
-      langSelectPanel.value = state.lang;
-
-      spoilerToggleCfg.checked = !!state.spoiler;
-      spoilerTogglePanel.checked = !!state.spoiler;
-
-      spoilerLabelCfg.textContent = state.spoiler ? "ON" : "OFF";
-      spoilerLabelPanel.textContent = state.spoiler ? "ON" : "OFF";
-    }
-
-    function loadState(){
-      try{
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return structuredClone(defaultState);
-        const parsed = JSON.parse(raw);
-        return {
-          lang: parsed.lang === "FR" ? "FR" : "EN",
-          spoiler: !!parsed.spoiler,
-          ranks: (parsed.ranks && typeof parsed.ranks === "object") ? parsed.ranks : {}
-        };
-      }catch{
-        return structuredClone(defaultState);
+        moveToUnranked(card);
+        return;
       }
+
+      const rank = parseInt(value, 10);
+      if (!Number.isFinite(rank) || rank <= 0) {
+        input.value = "";
+        card.dataset.rank = "";
+        card.classList.remove("ranked");
+        moveToUnranked(card);
+        return;
+      }
+
+      card.dataset.rank = String(rank);
+      card.classList.add("ranked");
+      moveToRanked(card);
+      sortRanked();
     }
 
-    function persist(){
-      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch{}
+    function moveToRanked(card) {
+      if (card.parentElement !== rankedGrid) rankedGrid.appendChild(card);
+      sortRanked();
     }
 
-    async function waitForImages(root){
-      const imgs = Array.from(root.querySelectorAll("img"));
-      await Promise.all(imgs.map(img => {
-        if (img.complete) return Promise.resolve();
-        return new Promise(res => {
-          img.addEventListener("load", res, { once:true });
-          img.addEventListener("error", res, { once:true });
-        });
-      }));
+    function moveToUnranked(card) {
+      if (card.parentElement !== unrankedGrid) unrankedGrid.appendChild(card);
+      sortUnranked();
     }
 
-    async function exportPNG(){
-      const app = document.getElementById("app");
+    function sortRanked() {
+      const cards = Array.from(rankedGrid.querySelectorAll(".card"));
+      cards.sort((a, b) => {
+        const ra = parseInt(a.dataset.rank || "0", 10) || 0;
+        const rb = parseInt(b.dataset.rank || "0", 10) || 0;
+        if (ra !== rb) return ra - rb;
+        const ia = parseInt(a.dataset.index || "0", 10);
+        const ib = parseInt(b.dataset.index || "0", 10);
+        return ia - ib;
+      });
+      cards.forEach(c => rankedGrid.appendChild(c));
+    }
 
-      // attendre fonts + images (réduit les risques de canvas “vide”)
-      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch {}
-      await waitForImages(app);
+    function sortUnranked() {
+      const cards = Array.from(unrankedGrid.querySelectorAll(".card"));
+      cards.sort((a, b) => {
+        const ia = parseInt(a.dataset.index || "0", 10);
+        const ib = parseInt(b.dataset.index || "0", 10);
+        return ia - ib;
+      });
+      cards.forEach(c => unrankedGrid.appendChild(c));
+    }
 
-      // html2canvas: utiliser onclone pour appliquer export-mode dans le DOM cloné
-      // et ignoreElements pour exclure le panneau/menu.
-      try{
-        const canvas = await html2canvas(app, {
-          backgroundColor: "#0B1020",
+    games.forEach((g, i) => {
+      const card = createCard(g, i);
+      if (g.rank) rankedGrid.appendChild(card);
+      else unrankedGrid.appendChild(card);
+    });
+
+    sortRanked();
+    sortUnranked();
+
+    const cfgScreen = document.getElementById("config-screen");
+    const app = document.getElementById("app");
+    const cfgOk = document.getElementById("cfg-ok");
+    const sideMenu = document.getElementById("side-menu");
+    const sideHandle = document.getElementById("side-handle");
+    const sideSpoiler = document.getElementById("side-spoiler");
+    const btnExport = document.getElementById("btn-export");
+    const sideLang = document.getElementById("side-lang");
+
+    cfgOk.addEventListener("click", () => {
+      const langInput = document.querySelector('input[name="lang"]:checked');
+      currentLang = langInput ? langInput.value : "en";
+      sideLang.value = currentLang;
+
+      spoilerOn = document.getElementById("cfg-spoiler").checked;
+
+      cfgScreen.style.display = "none";
+      app.classList.add("visible");
+      sideMenu.style.display = "block";
+
+      applyLanguage();
+      updateSpoilerState();
+
+      document.body.style.alignItems = "flex-start";
+      document.body.style.justifyContent = "center";
+    });
+
+    sideHandle.addEventListener("click", () => {
+      sideMenu.classList.toggle("open");
+    });
+
+    sideSpoiler.addEventListener("change", () => {
+      spoilerOn = sideSpoiler.checked;
+      updateSpoilerState();
+    });
+
+    sideLang.addEventListener("change", () => {
+      currentLang = sideLang.value;
+      applyLanguage();
+    });
+
+    function nextFrame() {
+      return new Promise(resolve => requestAnimationFrame(() => resolve()));
+    }
+
+    btnExport.addEventListener("click", async () => {
+      if (!window.html2canvas) return;
+
+      const target = document.getElementById("app");
+      sideMenu.classList.remove("open");
+      document.body.classList.add("export-mode");
+      await nextFrame();
+
+      try {
+        const canvas = await html2canvas(target, {
           useCORS: true,
-          allowTaint: false,
+          backgroundColor: "#0b1126",
           scale: 2,
-          logging: false,
-          ignoreElements: (el) => el && el.dataset && el.dataset.ignoreExport === "true",
           onclone: (doc) => {
             doc.body.classList.add("export-mode");
-            // Sécurité: retirer explicitement les éléments ignorés
-            doc.querySelectorAll('[data-ignore-export="true"]').forEach(n => n.remove());
-            // Sécurité: forcer le crossorigin sur les images clonées
-            doc.querySelectorAll("img").forEach(img => img.setAttribute("crossorigin","anonymous"));
           }
         });
 
-        const a = document.createElement("a");
-        a.download = "TopTrails.png";
-        a.href = canvas.toDataURL("image/png");
-        a.click();
-      }catch(err){
-        console.error("Export failed:", err);
-        alert("Export échoué. Ouvre la console pour le détail (F12).");
+        const link = document.createElement("a");
+        link.download = "top-trails.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      } catch (err) {
+        console.error("html2canvas error:", err);
+      } finally {
+        document.body.classList.remove("export-mode");
       }
-    }
+    });
+
+    applyLanguage();
   </script>
 </body>
 </html>
