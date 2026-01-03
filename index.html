@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="referrer" content="no-referrer" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 
@@ -12,11 +11,15 @@
 
     :root{
       --text:#f5f7ff;
-      --gold:#ffc857;
       --gold2:#ffd369;
       --radius:18px;
       --infoH:44px;
       --bgSolid:#070a1b;
+
+      --cols:7;
+      --cardW:190px;
+      --gap:12px;
+      --gridW: calc(var(--cols) * var(--cardW) + (var(--cols) - 1) * var(--gap));
     }
 
     body{
@@ -186,7 +189,7 @@
       position:absolute;
       inset:0;
       background:
-        radial-gradient(circle at 50% 0%, rgba(6,12,42,0.08), rgba(7,10,27,0.26) 55%, rgba(6,8,20,0.34) 100%),
+        radial-gradient(circle at 50% 0%, rgba(6,12,42,0.08), rgba(7,10,27,0.22) 55%, rgba(6,8,20,0.28) 100%),
         linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.10));
     }
 
@@ -198,8 +201,8 @@
       display:flex;
       flex-direction:column;
       width:100%;
-      max-width:1600px;
-      margin:0 auto;
+      justify-content:center;
+      align-items:center;
     }
 
     .grid-wrapper{
@@ -208,33 +211,37 @@
       flex-direction:column;
       gap:16px;
       padding-top:2px;
-      width:100%;
+      width:var(--gridW);
       transform:scale(0.90);
       transform-origin:top center;
       justify-content:flex-start;
+      align-items:center;
     }
 
-    .section{width:100%}
+    .section{width:var(--gridW)}
 
     .grid{
       display:grid;
-      grid-template-columns:repeat(7, minmax(0, 1fr));
-      gap:12px;
+      width:var(--gridW);
+      grid-template-columns:repeat(var(--cols), var(--cardW));
+      gap:var(--gap);
+      justify-content:center;
     }
 
     .subtle-divider{
       height:1px;
-      width:100%;
+      width:var(--gridW);
       background:linear-gradient(to right, transparent 0%, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.12) 75%, transparent 100%);
       opacity:0.75;
     }
 
     .unranked-label{
+      width:var(--gridW);
       font-size:11px;
       opacity:0.80;
       letter-spacing:0.10em;
       text-transform:uppercase;
-      margin-left:4px;
+      padding-left:4px;
     }
 
     .app.unranked-empty #divider,
@@ -275,8 +282,8 @@
       z-index:8;
       display:inline-flex;
       align-items:center;
-      gap:6px;
-      padding:4px 8px;
+      gap:4px;
+      padding:4px 6px;
       border-radius:999px;
       background:rgba(0,0,0,0.52);
       border:1px solid rgba(255,255,255,0.10);
@@ -294,7 +301,7 @@
     }
 
     .rank-input{
-      width:32px;
+      width:26px;
       background:transparent;
       border:none;
       color:#ffdf7b;
@@ -526,30 +533,41 @@
       background:var(--bgSolid) !important;
     }
 
-    body.export-mode .side-menu{
-      display:none !important;
+    body.export-mode .side-menu{display:none !important}
+    body.export-mode .rank-badge{backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
+    body.export-mode .grid-wrapper{transform:none !important}
+    body.export-mode .subtle-divider{
+      height:2px !important;
+      background:rgba(255,255,255,0.12) !important;
     }
-
-    body.export-mode .rank-badge{
-      backdrop-filter:none !important;
-      -webkit-backdrop-filter:none !important;
+    body.export-mode .app-bg::after{
+      background:rgba(0,0,0,0.18) !important;
     }
 
     @media (max-width: 1500px){
-      .grid{grid-template-columns:repeat(6, minmax(0, 1fr))}
+      :root{
+        --cols:6;
+        --cardW:182px;
+      }
     }
 
     @media (max-width: 1280px){
       body{overflow-y:auto;align-items:flex-start}
-      .content{padding:14px 14px 18px;max-width:none}
-      .grid-wrapper{transform:scale(1)}
-      .grid{grid-template-columns:repeat(4, minmax(0, 1fr))}
+      :root{
+        --cols:4;
+        --cardW:170px;
+      }
+      .content{padding:14px 14px 18px}
+      .grid-wrapper{transform:none}
     }
 
     @media (max-width: 720px){
-      .grid{grid-template-columns:repeat(2, minmax(0, 1fr))}
+      :root{
+        --cols:2;
+        --cardW:160px;
+      }
       .logo-img{max-height:68%}
-      .rank-input{width:30px}
+      .rank-input{width:26px}
     }
   </style>
 </head>
@@ -601,7 +619,7 @@
 
   <div id="app" class="app">
     <div class="app-bg">
-      <img id="bg-img" referrerpolicy="no-referrer" src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3375780/page_bg_raw.jpg?t=1766080552" alt="" />
+      <img id="bg-img" crossorigin="anonymous" referrerpolicy="no-referrer" src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3375780/page_bg_raw.jpg?t=1766080552" alt="" />
     </div>
 
     <div class="content">
@@ -906,8 +924,8 @@
 
         <div class="view-normal">
           <div class="cover">
-            <img class="cover-blur" referrerpolicy="no-referrer" src="${safeCover}" alt="" />
-            <img class="cover-img" referrerpolicy="no-referrer" src="${safeCover}" alt="${safeName} cover" />
+            <img class="cover-blur" crossorigin="anonymous" referrerpolicy="no-referrer" src="${safeCover}" alt="" />
+            <img class="cover-img" crossorigin="anonymous" referrerpolicy="no-referrer" src="${safeCover}" alt="${safeName} cover" />
             <div class="no-cover">NO COVER</div>
           </div>
         </div>
@@ -915,7 +933,7 @@
         <div class="view-spoiler">
           <div class="spoiler-surface"></div>
           <div class="spoiler-inner">
-            <img class="logo-img" referrerpolicy="no-referrer" src="${safeLogo}" alt="${safeName} logo" />
+            <img class="logo-img" crossorigin="anonymous" referrerpolicy="no-referrer" src="${safeLogo}" alt="${safeName} logo" />
           </div>
         </div>
       `;
@@ -1055,13 +1073,13 @@
     }
 
     async function exportPNG(){
-      const appEl = document.getElementById("app");
+      const root = document.getElementById("app");
 
       try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch {}
-      await waitForImages(appEl);
+      await waitForImages(root);
 
       try{
-        const canvas = await html2canvas(appEl, {
+        const canvas = await html2canvas(root, {
           backgroundColor: "#0B1020",
           useCORS: true,
           allowTaint: false,
@@ -1085,9 +1103,9 @@
       }
     }
 
-    btnExport.addEventListener("click",()=>{
+    btnExport.addEventListener("click", async ()=>{
       sideMenu.classList.remove("open");
-      exportPNG();
+      await exportPNG();
     });
 
     applyLanguage();
