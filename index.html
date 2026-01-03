@@ -846,28 +846,38 @@
       applyLanguage();
     });
 
-    btnExport.addEventListener("click", () => {
-      if (!window.html2canvas) return;
+btnExport.addEventListener("click", () => {
+  if (!window.html2canvas) return;
 
-      const target = document.getElementById("app");
-      html2canvas(target, {
-        useCORS: true,
-        backgroundColor: null
-      }).then(canvas => {
-        try {
-          const link = document.createElement("a");
-          link.download = "top-trails.png";
-          link.href = canvas.toDataURL("image/png");
-          link.click();
-        } catch (err) {
-          console.error("Export error:", err);
-        }
-      }).catch(err => {
-        console.error("html2canvas error:", err);
-      });
-    });
+  const target = document.getElementById("app");
+
+  // Activer le mode export (désactive les gradients)
+  document.body.classList.add("export-mode");
+
+  html2canvas(target, {
+    useCORS: true,
+    backgroundColor: null
+  }).then(canvas => {
+    try {
+      const link = document.createElement("a");
+      link.download = "top-trails.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } catch (err) {
+      console.error("Export error:", err);
+    } finally {
+      // Toujours enlever le mode export
+      document.body.classList.remove("export-mode");
+    }
+  }).catch(err => {
+    console.error("html2canvas error:", err);
+    document.body.classList.remove("export-mode");
+  });
+});
+
 
     applyLanguage();
   </script>
 </body>
 </html>
+
